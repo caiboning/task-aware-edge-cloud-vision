@@ -2,8 +2,8 @@
     "model": "YOLO11n",
     "device": "cpu",
     "total_images": 128,
-    "total_inference_time_s": 2.822,
-    "average_inference_time_ms": 22.05,
+    "total_inference_time_s": 3.601,
+    "average_inference_time_ms": 28.13,
     "total_image_bytes": 6930964,
     "total_json_bytes": 54190,
     "data_reduction_percent": 99.22

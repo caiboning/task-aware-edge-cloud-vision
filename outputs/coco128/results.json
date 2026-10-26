@@ -63,7 +63,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 30.02,
+        "inference_time_ms": 39.25,
         "image_bytes": 62835,
         "json_bytes": 484
     },
@@ -74,14 +74,14 @@
                 "class": "giraffe",
                 "confidence": 0.8775,
                 "bbox": [
-                    374.14,
+                    374.13,
                     63.96,
                     601.83,
                     358.2
                 ]
             }
         ],
-        "inference_time_ms": 32.3,
+        "inference_time_ms": 41.35,
         "image_bytes": 89652,
         "json_bytes": 118
     },
@@ -109,7 +109,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 15.95,
+        "inference_time_ms": 24.24,
         "image_bytes": 30089,
         "json_bytes": 198
     },
@@ -127,7 +127,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.19,
+        "inference_time_ms": 22.68,
         "image_bytes": 105097,
         "json_bytes": 115
     },
@@ -155,7 +155,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 32.65,
+        "inference_time_ms": 42.21,
         "image_bytes": 66757,
         "json_bytes": 194
     },
@@ -173,7 +173,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 20.98,
+        "inference_time_ms": 29.01,
         "image_bytes": 56556,
         "json_bytes": 115
     },
@@ -281,7 +281,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 24.72,
+        "inference_time_ms": 28.19,
         "image_bytes": 40899,
         "json_bytes": 797
     },
@@ -319,7 +319,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 36.74,
+        "inference_time_ms": 40.89,
         "image_bytes": 135566,
         "json_bytes": 275
     },
@@ -367,7 +367,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 35.3,
+        "inference_time_ms": 40.58,
         "image_bytes": 59706,
         "json_bytes": 341
     },
@@ -425,7 +425,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.67,
+        "inference_time_ms": 29.42,
         "image_bytes": 57039,
         "json_bytes": 409
     },
@@ -453,7 +453,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 32.88,
+        "inference_time_ms": 39.74,
         "image_bytes": 83098,
         "json_bytes": 192
     },
@@ -491,7 +491,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 41.07,
+        "inference_time_ms": 41.56,
         "image_bytes": 124117,
         "json_bytes": 267
     },
@@ -589,7 +589,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 25.4,
+        "inference_time_ms": 26.63,
         "image_bytes": 47165,
         "json_bytes": 712
     },
@@ -637,7 +637,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.7,
+        "inference_time_ms": 24.39,
         "image_bytes": 50183,
         "json_bytes": 341
     },
@@ -665,7 +665,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 46.64,
+        "inference_time_ms": 44.47,
         "image_bytes": 73636,
         "json_bytes": 187
     },
@@ -683,7 +683,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 20.72,
+        "inference_time_ms": 27.01,
         "image_bytes": 23700,
         "json_bytes": 118
     },
@@ -721,7 +721,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 23.09,
+        "inference_time_ms": 29.61,
         "image_bytes": 87717,
         "json_bytes": 270
     },
@@ -829,7 +829,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.67,
+        "inference_time_ms": 28.26,
         "image_bytes": 41759,
         "json_bytes": 781
     },
@@ -867,7 +867,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.99,
+        "inference_time_ms": 22.34,
         "image_bytes": 29143,
         "json_bytes": 263
     },
@@ -895,7 +895,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.74,
+        "inference_time_ms": 22.2,
         "image_bytes": 66547,
         "json_bytes": 188
     },
@@ -993,7 +993,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 30.87,
+        "inference_time_ms": 41.5,
         "image_bytes": 62103,
         "json_bytes": 713
     },
@@ -1171,7 +1171,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.77,
+        "inference_time_ms": 25.66,
         "image_bytes": 56509,
         "json_bytes": 1304
     },
@@ -1279,7 +1279,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 33.31,
+        "inference_time_ms": 35.28,
         "image_bytes": 55067,
         "json_bytes": 784
     },
@@ -1347,7 +1347,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 21.01,
+        "inference_time_ms": 28.17,
         "image_bytes": 64488,
         "json_bytes": 497
     },
@@ -1375,7 +1375,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 76.99,
+        "inference_time_ms": 25.54,
         "image_bytes": 40373,
         "json_bytes": 186
     },
@@ -1423,7 +1423,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 33.19,
+        "inference_time_ms": 23.99,
         "image_bytes": 31511,
         "json_bytes": 338
     },
@@ -1491,7 +1491,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 36.46,
+        "inference_time_ms": 41.49,
         "image_bytes": 73743,
         "json_bytes": 493
     },
@@ -1569,7 +1569,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.96,
+        "inference_time_ms": 22.92,
         "image_bytes": 43512,
         "json_bytes": 563
     },
@@ -1657,7 +1657,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 36.25,
+        "inference_time_ms": 46.31,
         "image_bytes": 30392,
         "json_bytes": 623
     },
@@ -1705,7 +1705,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.32,
+        "inference_time_ms": 22.5,
         "image_bytes": 117593,
         "json_bytes": 346
     },
@@ -1833,7 +1833,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.71,
+        "inference_time_ms": 21.94,
         "image_bytes": 29226,
         "json_bytes": 936
     },
@@ -1861,7 +1861,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.95,
+        "inference_time_ms": 26.34,
         "image_bytes": 107259,
         "json_bytes": 196
     },
@@ -1899,7 +1899,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.3,
+        "inference_time_ms": 28.23,
         "image_bytes": 63228,
         "json_bytes": 263
     },
@@ -2017,7 +2017,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.87,
+        "inference_time_ms": 22.37,
         "image_bytes": 40901,
         "json_bytes": 892
     },
@@ -2055,7 +2055,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.87,
+        "inference_time_ms": 23.82,
         "image_bytes": 64301,
         "json_bytes": 263
     },
@@ -2103,7 +2103,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.67,
+        "inference_time_ms": 24.36,
         "image_bytes": 62642,
         "json_bytes": 344
     },
@@ -2141,7 +2141,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.75,
+        "inference_time_ms": 27.23,
         "image_bytes": 52676,
         "json_bytes": 267
     },
@@ -2370,11 +2370,11 @@
             },
             {
                 "class": "bowl",
-                "confidence": 0.3414,
+                "confidence": 0.3415,
                 "bbox": [
                     422.62,
                     236.9,
-                    632.94,
+                    632.93,
                     346.79
                 ]
             },
@@ -2439,7 +2439,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 21.54,
+        "inference_time_ms": 25.09,
         "image_bytes": 70172,
         "json_bytes": 2184
     },
@@ -2517,7 +2517,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 51.56,
+        "inference_time_ms": 22.43,
         "image_bytes": 52369,
         "json_bytes": 581
     },
@@ -2535,7 +2535,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 20.66,
+        "inference_time_ms": 31.85,
         "image_bytes": 41630,
         "json_bytes": 117
     },
@@ -2673,7 +2673,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.15,
+        "inference_time_ms": 22.78,
         "image_bytes": 48024,
         "json_bytes": 1002
     },
@@ -2711,14 +2711,14 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.37,
+        "inference_time_ms": 21.81,
         "image_bytes": 48428,
         "json_bytes": 260
     },
     {
         "image": "000000000250.jpg",
         "detections": [],
-        "inference_time_ms": 18.47,
+        "inference_time_ms": 25.32,
         "image_bytes": 49998,
         "json_bytes": 44
     },
@@ -2886,7 +2886,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.75,
+        "inference_time_ms": 26.3,
         "image_bytes": 60297,
         "json_bytes": 1253
     },
@@ -2974,7 +2974,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.01,
+        "inference_time_ms": 27.09,
         "image_bytes": 26982,
         "json_bytes": 647
     },
@@ -3002,7 +3002,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 34.12,
+        "inference_time_ms": 47.73,
         "image_bytes": 55292,
         "json_bytes": 193
     },
@@ -3060,7 +3060,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.83,
+        "inference_time_ms": 24.51,
         "image_bytes": 35093,
         "json_bytes": 423
     },
@@ -3118,7 +3118,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 15.52,
+        "inference_time_ms": 23.82,
         "image_bytes": 33028,
         "json_bytes": 426
     },
@@ -3156,7 +3156,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.62,
+        "inference_time_ms": 22.59,
         "image_bytes": 96160,
         "json_bytes": 261
     },
@@ -3274,7 +3274,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 20.89,
+        "inference_time_ms": 28.63,
         "image_bytes": 60331,
         "json_bytes": 887
     },
@@ -3312,7 +3312,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 23.83,
+        "inference_time_ms": 35.45,
         "image_bytes": 114443,
         "json_bytes": 281
     },
@@ -3380,7 +3380,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.71,
+        "inference_time_ms": 22.97,
         "image_bytes": 91689,
         "json_bytes": 507
     },
@@ -3568,7 +3568,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 15.28,
+        "inference_time_ms": 24.45,
         "image_bytes": 54518,
         "json_bytes": 1411
     },
@@ -3616,7 +3616,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.24,
+        "inference_time_ms": 25.37,
         "image_bytes": 45914,
         "json_bytes": 346
     },
@@ -3664,7 +3664,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.45,
+        "inference_time_ms": 30.46,
         "image_bytes": 35865,
         "json_bytes": 345
     },
@@ -3692,7 +3692,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 15.75,
+        "inference_time_ms": 24.43,
         "image_bytes": 22412,
         "json_bytes": 195
     },
@@ -3770,7 +3770,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.84,
+        "inference_time_ms": 28.05,
         "image_bytes": 66986,
         "json_bytes": 571
     },
@@ -3858,7 +3858,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.06,
+        "inference_time_ms": 22.38,
         "image_bytes": 48907,
         "json_bytes": 619
     },
@@ -3936,7 +3936,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 27.8,
+        "inference_time_ms": 39.56,
         "image_bytes": 36236,
         "json_bytes": 563
     },
@@ -3964,7 +3964,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.81,
+        "inference_time_ms": 29.02,
         "image_bytes": 33736,
         "json_bytes": 197
     },
@@ -4052,7 +4052,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 27.69,
+        "inference_time_ms": 32.19,
         "image_bytes": 26957,
         "json_bytes": 636
     },
@@ -4100,7 +4100,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.78,
+        "inference_time_ms": 26.3,
         "image_bytes": 18860,
         "json_bytes": 359
     },
@@ -4118,7 +4118,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.48,
+        "inference_time_ms": 27.57,
         "image_bytes": 35980,
         "json_bytes": 119
     },
@@ -4226,7 +4226,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.42,
+        "inference_time_ms": 26.27,
         "image_bytes": 116152,
         "json_bytes": 795
     },
@@ -4264,7 +4264,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 21.22,
+        "inference_time_ms": 24.26,
         "image_bytes": 36164,
         "json_bytes": 263
     },
@@ -4312,7 +4312,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 23.77,
+        "inference_time_ms": 23.49,
         "image_bytes": 33310,
         "json_bytes": 341
     },
@@ -4370,7 +4370,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.69,
+        "inference_time_ms": 27.73,
         "image_bytes": 27793,
         "json_bytes": 407
     },
@@ -4398,7 +4398,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 23.5,
+        "inference_time_ms": 25.33,
         "image_bytes": 53134,
         "json_bytes": 191
     },
@@ -4516,7 +4516,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 20.34,
+        "inference_time_ms": 26.01,
         "image_bytes": 51895,
         "json_bytes": 868
     },
@@ -4544,7 +4544,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 22.39,
+        "inference_time_ms": 32.79,
         "image_bytes": 68453,
         "json_bytes": 189
     },
@@ -4612,7 +4612,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 34.22,
+        "inference_time_ms": 48.2,
         "image_bytes": 55487,
         "json_bytes": 493
     },
@@ -4650,7 +4650,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.36,
+        "inference_time_ms": 26.06,
         "image_bytes": 56346,
         "json_bytes": 255
     },
@@ -4678,7 +4678,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.61,
+        "inference_time_ms": 29.49,
         "image_bytes": 63846,
         "json_bytes": 186
     },
@@ -4696,7 +4696,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.96,
+        "inference_time_ms": 19.75,
         "image_bytes": 41249,
         "json_bytes": 116
     },
@@ -4734,7 +4734,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 27.67,
+        "inference_time_ms": 39.35,
         "image_bytes": 28284,
         "json_bytes": 280
     },
@@ -4772,7 +4772,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.33,
+        "inference_time_ms": 23.67,
         "image_bytes": 67866,
         "json_bytes": 275
     },
@@ -4810,7 +4810,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 58.62,
+        "inference_time_ms": 34.94,
         "image_bytes": 22969,
         "json_bytes": 267
     },
@@ -4838,7 +4838,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.91,
+        "inference_time_ms": 22.53,
         "image_bytes": 43550,
         "json_bytes": 199
     },
@@ -4871,12 +4871,12 @@
                 "bbox": [
                     146.63,
                     546.15,
-                    214.83,
+                    214.82,
                     639.68
                 ]
             }
         ],
-        "inference_time_ms": 15.54,
+        "inference_time_ms": 27.01,
         "image_bytes": 32998,
         "json_bytes": 267
     },
@@ -5064,7 +5064,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 20.18,
+        "inference_time_ms": 22.5,
         "image_bytes": 58374,
         "json_bytes": 1366
     },
@@ -5112,7 +5112,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 20.86,
+        "inference_time_ms": 23.46,
         "image_bytes": 37330,
         "json_bytes": 335
     },
@@ -5150,7 +5150,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 15.33,
+        "inference_time_ms": 23.71,
         "image_bytes": 36624,
         "json_bytes": 268
     },
@@ -5238,7 +5238,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.02,
+        "inference_time_ms": 24.11,
         "image_bytes": 49942,
         "json_bytes": 636
     },
@@ -5266,7 +5266,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 31.83,
+        "inference_time_ms": 46.29,
         "image_bytes": 36307,
         "json_bytes": 189
     },
@@ -5284,7 +5284,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.32,
+        "inference_time_ms": 22.23,
         "image_bytes": 33837,
         "json_bytes": 115
     },
@@ -5302,7 +5302,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 23.71,
+        "inference_time_ms": 30.23,
         "image_bytes": 9286,
         "json_bytes": 119
     },
@@ -5330,7 +5330,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 23.26,
+        "inference_time_ms": 28.71,
         "image_bytes": 37728,
         "json_bytes": 199
     },
@@ -5368,7 +5368,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.19,
+        "inference_time_ms": 23.7,
         "image_bytes": 57241,
         "json_bytes": 275
     },
@@ -5466,7 +5466,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.01,
+        "inference_time_ms": 20.94,
         "image_bytes": 48780,
         "json_bytes": 740
     },
@@ -5494,7 +5494,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 22.01,
+        "inference_time_ms": 27.87,
         "image_bytes": 26278,
         "json_bytes": 193
     },
@@ -5552,7 +5552,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.31,
+        "inference_time_ms": 22.79,
         "image_bytes": 27309,
         "json_bytes": 406
     },
@@ -5570,14 +5570,14 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.79,
+        "inference_time_ms": 21.06,
         "image_bytes": 82455,
         "json_bytes": 116
     },
     {
         "image": "000000000508.jpg",
         "detections": [],
-        "inference_time_ms": 18.8,
+        "inference_time_ms": 28.64,
         "image_bytes": 36527,
         "json_bytes": 44
     },
@@ -5605,7 +5605,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.95,
+        "inference_time_ms": 26.18,
         "image_bytes": 76888,
         "json_bytes": 192
     },
@@ -5633,7 +5633,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.62,
+        "inference_time_ms": 21.26,
         "image_bytes": 30781,
         "json_bytes": 185
     },
@@ -5721,7 +5721,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.17,
+        "inference_time_ms": 23.42,
         "image_bytes": 50302,
         "json_bytes": 626
     },
@@ -5749,7 +5749,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.52,
+        "inference_time_ms": 29.32,
         "image_bytes": 61674,
         "json_bytes": 196
     },
@@ -5857,7 +5857,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 17.22,
+        "inference_time_ms": 30.72,
         "image_bytes": 33369,
         "json_bytes": 797
     },
@@ -5925,7 +5925,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.51,
+        "inference_time_ms": 25.71,
         "image_bytes": 68045,
         "json_bytes": 485
     },
@@ -5983,7 +5983,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.69,
+        "inference_time_ms": 25.42,
         "image_bytes": 19624,
         "json_bytes": 415
     },
@@ -6001,7 +6001,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 15.95,
+        "inference_time_ms": 25.0,
         "image_bytes": 73559,
         "json_bytes": 121
     },
@@ -6119,7 +6119,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 20.1,
+        "inference_time_ms": 31.76,
         "image_bytes": 50365,
         "json_bytes": 873
     },
@@ -6217,7 +6217,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.52,
+        "inference_time_ms": 25.06,
         "image_bytes": 92299,
         "json_bytes": 722
     },
@@ -6245,7 +6245,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.7,
+        "inference_time_ms": 22.8,
         "image_bytes": 42878,
         "json_bytes": 197
     },
@@ -6293,7 +6293,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.6,
+        "inference_time_ms": 33.65,
         "image_bytes": 14565,
         "json_bytes": 350
     },
@@ -6412,7 +6412,7 @@
             },
             {
                 "class": "chair",
-                "confidence": 0.4747,
+                "confidence": 0.4748,
                 "bbox": [
                     187.28,
                     256.75,
@@ -6611,7 +6611,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.34,
+        "inference_time_ms": 31.85,
         "image_bytes": 46726,
         "json_bytes": 2334
     },
@@ -6629,7 +6629,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 14.78,
+        "inference_time_ms": 23.91,
         "image_bytes": 55042,
         "json_bytes": 117
     },
@@ -6667,7 +6667,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.98,
+        "inference_time_ms": 24.59,
         "image_bytes": 34991,
         "json_bytes": 271
     },
@@ -6685,7 +6685,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.63,
+        "inference_time_ms": 27.6,
         "image_bytes": 163333,
         "json_bytes": 113
     },
@@ -6723,7 +6723,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 20.98,
+        "inference_time_ms": 32.92,
         "image_bytes": 45065,
         "json_bytes": 261
     },
@@ -6821,7 +6821,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.52,
+        "inference_time_ms": 24.6,
         "image_bytes": 48307,
         "json_bytes": 709
     },
@@ -6839,7 +6839,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 22.02,
+        "inference_time_ms": 27.2,
         "image_bytes": 36369,
         "json_bytes": 118
     },
@@ -6857,7 +6857,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.12,
+        "inference_time_ms": 26.27,
         "image_bytes": 41324,
         "json_bytes": 116
     },
@@ -6875,7 +6875,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.43,
+        "inference_time_ms": 31.99,
         "image_bytes": 91739,
         "json_bytes": 115
     },
@@ -6963,7 +6963,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 14.45,
+        "inference_time_ms": 18.77,
         "image_bytes": 31374,
         "json_bytes": 660
     },
@@ -7021,7 +7021,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 25.56,
+        "inference_time_ms": 20.73,
         "image_bytes": 57584,
         "json_bytes": 414
     },
@@ -7109,7 +7109,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 20.38,
+        "inference_time_ms": 26.83,
         "image_bytes": 85596,
         "json_bytes": 615
     },
@@ -7157,7 +7157,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.19,
+        "inference_time_ms": 23.88,
         "image_bytes": 78481,
         "json_bytes": 352
     },
@@ -7195,7 +7195,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 15.05,
+        "inference_time_ms": 33.13,
         "image_bytes": 51808,
         "json_bytes": 266
     },
@@ -7233,7 +7233,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.34,
+        "inference_time_ms": 28.21,
         "image_bytes": 30476,
         "json_bytes": 268
     },
@@ -7291,7 +7291,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.8,
+        "inference_time_ms": 23.58,
         "image_bytes": 75952,
         "json_bytes": 419
     },
@@ -7319,7 +7319,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 20.19,
+        "inference_time_ms": 23.23,
         "image_bytes": 38403,
         "json_bytes": 190
     },
@@ -7337,7 +7337,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.88,
+        "inference_time_ms": 28.58,
         "image_bytes": 77526,
         "json_bytes": 123
     },
@@ -7415,7 +7415,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.6,
+        "inference_time_ms": 23.96,
         "image_bytes": 36504,
         "json_bytes": 560
     },
@@ -7433,7 +7433,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 18.44,
+        "inference_time_ms": 26.96,
         "image_bytes": 46706,
         "json_bytes": 116
     },
@@ -7461,7 +7461,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.97,
+        "inference_time_ms": 23.72,
         "image_bytes": 63438,
         "json_bytes": 188
     },
@@ -7499,7 +7499,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 19.36,
+        "inference_time_ms": 25.41,
         "image_bytes": 31400,
         "json_bytes": 259
     },
@@ -7537,7 +7537,7 @@
                 ]
             }
         ],
-        "inference_time_ms": 16.86,
+        "inference_time_ms": 29.83,
         "image_bytes": 33865,
         "json_bytes": 254
     }
