@@ -1,9 +1,9 @@
 {
-    "model": "YOLO11n",
+    "model": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\models\\YOLO\\yolo11n_ncnn_model",
     "device": "cpu",
     "total_images": 128,
-    "total_inference_time_s": 4.156,
-    "average_inference_time_ms": 32.47,
+    "total_inference_time_s": 3.735,
+    "average_inference_time_ms": 29.18,
     "total_image_bytes": 6930964,
     "total_json_bytes": 54683,
     "data_reduction_percent": 99.21

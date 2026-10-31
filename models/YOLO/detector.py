@@ -1,55 +1,118 @@
 
+import time
 from pathlib import Path
+
+from PIL import Image
 from ultralytics import YOLO
 
+from toolbar import config
+
+
+# ==============================
+# YOLO Detector
+# ==============================
 
 class YOLODetector:
     """
     Local YOLO11 object detector.
 
-    Input:
-        Image path
+    Supports:
+        - Image path
+        - PIL Image
 
-    Output:
-        List of detected objects
+    Returns:
+        detections
+        latency
     """
 
-    def __init__(self, model_path=None, device="cpu", confidence=0.25):
-        if model_path is None:
-            model_path = (
-                Path(__file__).resolve().parent
-                / "yolo11n.pt"
+    def __init__(
+        self,
+        model_path=None,
+        device=None,
+        confidence=None
+    ):
+
+        self.model_path = (
+            model_path
+            if model_path is not None
+            else config.YOLO_MODEL
+        )
+
+        self.device = (
+            device
+            if device is not None
+            else config.YOLO_DEVICE
+        )
+
+        self.confidence = (
+            confidence
+            if confidence is not None
+            else config.YOLO_CONF
+        )
+
+        # Load YOLO once
+        self.model = YOLO(str(self.model_path))
+
+    # ==============================
+    # Object Detection
+    # ==============================
+
+    def detect(self, image, return_result=False):
+        """
+        Run YOLO inference.
+
+        Args:
+            image: str, Path, or PIL Image
+            return_result: Return raw Ultralytics result
+
+        Returns:
+            detections: list
+            latency: float (seconds)
+
+            If return_result=True:
+                detections, latency, result
+        """
+
+        if isinstance(image, (str, Path)):
+            source = str(image)
+
+        elif isinstance(image, Image.Image):
+            source = image
+
+        else:
+            raise TypeError(
+                f"Unsupported image type: {type(image)}"
             )
 
-        self.model = YOLO(str(model_path))
-        self.device = device
-        self.confidence = confidence
+        start = time.perf_counter()
 
-    def detect(self, image_path):
-        """
-        Run object detection on an image.
-        """
+        result = self.model.predict(
+            source=source,
+            conf=self.confidence,
+            device=self.device,
+            verbose=False
+        )[0]
 
-        results = self.model.predict(source=str(image_path), conf=self.confidence, device=self.device, verbose=False)
+        latency = time.perf_counter() - start
 
         detections = []
 
-        for result in results:
-            for box in result.boxes:
+        for box in result.boxes:
 
-                class_id = int(box.cls[0])
+            class_id = int(box.cls.item())
 
-                detection = {
-                    "class": self.model.names[class_id],
-                    "confidence": round(
-                        float(box.conf[0]), 4
-                    ),
-                    "bbox": [
-                        round(float(x), 2)
-                        for x in box.xyxy[0].tolist()
-                    ]
-                }
+            detections.append({
+                "class": result.names[class_id],
+                "confidence": round(
+                    float(box.conf.item()), 4
+                ),
+                "bbox": [
+                    round(float(x), 2)
+                    for x in box.xyxy[0].tolist()
+                ]
+            })
 
-                detections.append(detection)
+        if return_result:
+            return detections, latency, result
 
-        return detections
+        return detections, latency

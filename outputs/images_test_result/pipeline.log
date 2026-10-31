@@ -1,0 +1,169 @@
+2026-10-30 21:14:00 | INFO | ==================================================
+2026-10-30 21:14:00 | INFO | Pipeline batch started
+2026-10-30 21:14:00 | INFO | Question: What is the main color in this picture?
+2026-10-30 21:14:00 | INFO | Total images: 4
+2026-10-30 21:14:01 | WARNING | CROP FALLBACK | Image: 000000000030.jpg | No unique target detected. Switching to FULL_IMAGE.
+2026-10-30 21:14:05 | INFO | SUCCESS | Image: 000000000030.jpg | Route: FULL_IMAGE | Latency: 4567.92 ms
+2026-10-30 21:14:05 | WARNING | CROP FALLBACK | Image: 000000000034.jpg | No unique target detected. Switching to FULL_IMAGE.
+2026-10-30 21:14:07 | INFO | SUCCESS | Image: 000000000034.jpg | Route: FULL_IMAGE | Latency: 2298.60 ms
+2026-10-30 21:14:07 | WARNING | CROP FALLBACK | Image: 000000000036.jpg | No unique target detected. Switching to FULL_IMAGE.
+2026-10-30 21:14:09 | INFO | SUCCESS | Image: 000000000036.jpg | Route: FULL_IMAGE | Latency: 2310.79 ms
+2026-10-30 21:14:09 | WARNING | CROP FALLBACK | Image: test.jpg | No unique target detected. Switching to FULL_IMAGE.
+2026-10-30 21:14:12 | INFO | SUCCESS | Image: test.jpg | Route: FULL_IMAGE | Latency: 2463.27 ms
+2026-10-30 21:14:12 | INFO | Batch completed | Success: 4 | Failed: 0
+2026-10-30 21:26:53 | INFO | ==================================================
+2026-10-30 21:26:53 | INFO | Pipeline batch started
+2026-10-30 21:26:53 | INFO | Question: What is the main color in this picture?
+2026-10-30 21:26:53 | INFO | Total images: 4
+2026-10-30 21:26:53 | INFO | Processing image: 000000000030.jpg
+2026-10-30 21:26:57 | INFO | YOLO VISUALIZATION | Image: 000000000030.jpg | Detections: 2 | Saved: E:\Code\202Project\task-aware-edge-cloud-vision\outputs\images_test_result\yolo_detections\000000000030_jpg_yolo.jpg
+2026-10-30 21:26:57 | WARNING | CROP FALLBACK | Image: 000000000030.jpg | Reason: NO_MATCH | Matches: 0
+2026-10-30 21:27:01 | INFO | SUCCESS | Image: 000000000030.jpg | Route: FULL_IMAGE | Latency: 7431.67 ms
+2026-10-30 21:27:01 | INFO | Processing image: 000000000034.jpg
+2026-10-30 21:27:01 | INFO | YOLO VISUALIZATION | Image: 000000000034.jpg | Detections: 1 | Saved: E:\Code\202Project\task-aware-edge-cloud-vision\outputs\images_test_result\yolo_detections\000000000034_jpg_yolo.jpg
+2026-10-30 21:27:01 | WARNING | CROP FALLBACK | Image: 000000000034.jpg | Reason: NO_MATCH | Matches: 0
+2026-10-30 21:27:03 | INFO | SUCCESS | Image: 000000000034.jpg | Route: FULL_IMAGE | Latency: 2306.80 ms
+2026-10-30 21:27:03 | INFO | Processing image: 000000000036.jpg
+2026-10-30 21:27:03 | INFO | YOLO VISUALIZATION | Image: 000000000036.jpg | Detections: 2 | Saved: E:\Code\202Project\task-aware-edge-cloud-vision\outputs\images_test_result\yolo_detections\000000000036_jpg_yolo.jpg
+2026-10-30 21:27:03 | WARNING | CROP FALLBACK | Image: 000000000036.jpg | Reason: NO_MATCH | Matches: 0
+2026-10-30 21:27:05 | INFO | SUCCESS | Image: 000000000036.jpg | Route: FULL_IMAGE | Latency: 2286.81 ms
+2026-10-30 21:27:05 | INFO | Processing image: test.jpg
+2026-10-30 21:27:05 | INFO | YOLO VISUALIZATION | Image: test.jpg | Detections: 5 | Saved: E:\Code\202Project\task-aware-edge-cloud-vision\outputs\images_test_result\yolo_detections\test_jpg_yolo.jpg
+2026-10-30 21:27:05 | WARNING | CROP FALLBACK | Image: test.jpg | Reason: NO_MATCH | Matches: 0
+2026-10-30 21:27:08 | INFO | SUCCESS | Image: test.jpg | Route: FULL_IMAGE | Latency: 2478.25 ms
+2026-10-30 21:27:08 | INFO | Batch completed | Success: 4 | Failed: 0 | Crop Fallbacks: 4
+2026-10-30 21:37:57 | INFO | ==================================================
+2026-10-30 21:37:57 | INFO | Pipeline batch started
+2026-10-30 21:37:57 | INFO | Question: Is there a man in the picture?
+2026-10-30 21:37:57 | INFO | Total images: 4
+2026-10-30 21:37:57 | INFO | Processing image: 000000000030.jpg
+2026-10-30 21:38:00 | INFO | SUCCESS | Image: 000000000030.jpg | Route: LOCAL_ANSWER | Latency: 3499.65 ms
+2026-10-30 21:38:00 | INFO | Processing image: 000000000034.jpg
+2026-10-30 21:38:03 | INFO | SUCCESS | Image: 000000000034.jpg | Route: LOCAL_ANSWER | Latency: 2260.21 ms
+2026-10-30 21:38:03 | INFO | Processing image: 000000000036.jpg
+2026-10-30 21:38:05 | INFO | SUCCESS | Image: 000000000036.jpg | Route: LOCAL_ANSWER | Latency: 2277.71 ms
+2026-10-30 21:38:05 | INFO | Processing image: test.jpg
+2026-10-30 21:38:07 | INFO | SUCCESS | Image: test.jpg | Route: LOCAL_ANSWER | Latency: 2309.71 ms
+2026-10-30 21:38:07 | INFO | Batch completed | Success: 4 | Failed: 0 | Crop Fallbacks: 0
+2026-10-30 21:48:48 | INFO | ==================================================
+2026-10-30 21:48:48 | INFO | Pipeline batch started
+2026-10-30 21:48:48 | INFO | Question: What is the weather in this picture?
+2026-10-30 21:48:48 | INFO | Total images: 4
+2026-10-30 21:48:49 | INFO | YOLO DETECTION | Image: 000000000030.jpg | Objects: 2
+2026-10-30 21:48:49 | INFO | CROP SUCCESS | Image: 000000000030.jpg | Class: vase | Method: SINGLE
+2026-10-30 21:48:49 | INFO | CROP SUCCESS | Image: 000000000030.jpg | Class: potted plant | Method: SINGLE
+2026-10-30 21:48:53 | INFO | SUCCESS | Image: 000000000030.jpg | Route: LOCAL_ANSWER | Latency: 4639.14 ms
+2026-10-30 21:48:53 | INFO | YOLO DETECTION | Image: 000000000034.jpg | Objects: 1
+2026-10-30 21:48:53 | INFO | CROP SUCCESS | Image: 000000000034.jpg | Class: zebra | Method: SINGLE
+2026-10-30 21:48:55 | INFO | SUCCESS | Image: 000000000034.jpg | Route: LOCAL_ANSWER | Latency: 2323.08 ms
+2026-10-30 21:48:55 | INFO | YOLO DETECTION | Image: 000000000036.jpg | Objects: 2
+2026-10-30 21:48:55 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: person | Method: SINGLE
+2026-10-30 21:48:55 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
+2026-10-30 21:48:57 | INFO | SUCCESS | Image: 000000000036.jpg | Route: LOCAL_ANSWER | Latency: 2316.13 ms
+2026-10-30 21:48:58 | INFO | YOLO DETECTION | Image: test.jpg | Objects: 5
+2026-10-30 21:48:58 | INFO | CROP SUCCESS | Image: test.jpg | Class: bus | Method: SINGLE
+2026-10-30 21:48:58 | WARNING | CROP FALLBACK | Image: test.jpg | Class: person | Reason: MULTIPLE_DISCONNECTED_REGIONS
+2026-10-30 21:49:00 | INFO | SUCCESS | Image: test.jpg | Route: LOCAL_ANSWER | Latency: 2386.54 ms
+2026-10-30 21:49:00 | INFO | Batch completed | Success: 4 | Failed: 0 | Generated Crops: 6
+2026-10-30 21:52:07 | INFO | ==================================================
+2026-10-30 21:52:07 | INFO | Pipeline batch started
+2026-10-30 21:52:07 | INFO | Question: Describe this image.
+2026-10-30 21:52:07 | INFO | Total images: 4
+2026-10-30 21:52:07 | ERROR | FAILED | Image: 000000000030.jpg
+Traceback (most recent call last):
+  File "E:\Code\202Project\task-aware-edge-cloud-vision\pipeline.py", line 482, in main
+    result = run_pipeline(
+        image_path,
+        question
+    )
+  File "E:\Code\202Project\task-aware-edge-cloud-vision\pipeline.py", line 179, in run_pipeline
+    with Image.open(image_path) as source:
+         ~~~~~~~~~~^^^^^^^^^^^^
+  File "E:\Code\202Project\task-aware-edge-cloud-vision\.venv\Lib\site-packages\ultralytics\utils\patches.py", line 90, in image_open
+    return _image_open(filename, *args, **kwargs)
+  File "E:\Code\202Project\task-aware-edge-cloud-vision\.venv\Lib\site-packages\PIL\Image.py", line 3654, in open
+    fp = builtins.open(filename, "rb")
+FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\202Project\\task-aware-edge-cloud-vision\\data\\images_test\\000000000030.jpg'
+2026-10-30 21:52:08 | INFO | YOLO DETECTION | Image: 000000000034.jpg | Objects: 1
+2026-10-30 21:52:08 | INFO | CROP SUCCESS | Image: 000000000034.jpg | Class: zebra | Method: SINGLE
+2026-10-30 21:52:10 | INFO | SUCCESS | Image: 000000000034.jpg | Route: LOCAL_ANSWER | Latency: 3458.47 ms
+2026-10-30 21:52:10 | INFO | YOLO DETECTION | Image: 000000000036.jpg | Objects: 2
+2026-10-30 21:52:10 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: person | Method: SINGLE
+2026-10-30 21:52:10 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
+2026-10-30 21:52:13 | INFO | SUCCESS | Image: 000000000036.jpg | Route: LOCAL_ANSWER | Latency: 2343.73 ms
+2026-10-30 21:52:13 | ERROR | FAILED | Image: test.jpg
+Traceback (most recent call last):
+  File "E:\Code\202Project\task-aware-edge-cloud-vision\pipeline.py", line 482, in main
+    result = run_pipeline(
+        image_path,
+        question
+    )
+  File "E:\Code\202Project\task-aware-edge-cloud-vision\pipeline.py", line 179, in run_pipeline
+    with Image.open(image_path) as source:
+         ~~~~~~~~~~^^^^^^^^^^^^
+  File "E:\Code\202Project\task-aware-edge-cloud-vision\.venv\Lib\site-packages\ultralytics\utils\patches.py", line 90, in image_open
+    return _image_open(filename, *args, **kwargs)
+  File "E:\Code\202Project\task-aware-edge-cloud-vision\.venv\Lib\site-packages\PIL\Image.py", line 3654, in open
+    fp = builtins.open(filename, "rb")
+FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\202Project\\task-aware-edge-cloud-vision\\data\\images_test\\test.jpg'
+2026-10-30 21:52:13 | INFO | Batch completed | Success: 2 | Failed: 2 | Generated Crops: 3
+2026-10-30 21:54:02 | INFO | ==================================================
+2026-10-30 21:54:02 | INFO | Pipeline batch started
+2026-10-30 21:54:02 | INFO | Question: Describe this image
+2026-10-30 21:54:02 | INFO | Total images: 2
+2026-10-30 21:54:03 | INFO | YOLO DETECTION | Image: 000000000034.jpg | Objects: 1
+2026-10-30 21:54:03 | INFO | CROP SUCCESS | Image: 000000000034.jpg | Class: zebra | Method: SINGLE
+2026-10-30 21:54:06 | INFO | SUCCESS | Image: 000000000034.jpg | Route: LOCAL_ANSWER | Latency: 3577.60 ms
+2026-10-30 21:54:06 | INFO | YOLO DETECTION | Image: 000000000036.jpg | Objects: 2
+2026-10-30 21:54:06 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: person | Method: SINGLE
+2026-10-30 21:54:06 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
+2026-10-30 21:54:08 | INFO | SUCCESS | Image: 000000000036.jpg | Route: LOCAL_ANSWER | Latency: 2346.72 ms
+2026-10-30 21:54:08 | INFO | Batch completed | Success: 2 | Failed: 0 | Generated Crops: 3
+2026-10-30 21:54:28 | INFO | ==================================================
+2026-10-30 21:54:28 | INFO | Pipeline batch started
+2026-10-30 21:54:28 | INFO | Question: Is there a zebra in this image? Answer only in Yes or No
+2026-10-30 21:54:28 | INFO | Total images: 2
+2026-10-30 21:54:29 | INFO | YOLO DETECTION | Image: 000000000034.jpg | Objects: 1
+2026-10-30 21:54:29 | INFO | CROP SUCCESS | Image: 000000000034.jpg | Class: zebra | Method: SINGLE
+2026-10-30 21:54:31 | INFO | SUCCESS | Image: 000000000034.jpg | Route: LOCAL_ANSWER | Latency: 3278.53 ms
+2026-10-30 21:54:31 | INFO | YOLO DETECTION | Image: 000000000036.jpg | Objects: 2
+2026-10-30 21:54:31 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: person | Method: SINGLE
+2026-10-30 21:54:31 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
+2026-10-30 21:54:33 | INFO | SUCCESS | Image: 000000000036.jpg | Route: LOCAL_ANSWER | Latency: 2269.81 ms
+2026-10-30 21:54:33 | INFO | Batch completed | Success: 2 | Failed: 0 | Generated Crops: 3
+2026-10-30 21:55:50 | INFO | ==================================================
+2026-10-30 21:55:50 | INFO | Pipeline batch started
+2026-10-30 21:55:50 | INFO | Question: What is the weather in this image? If the weather is not visible, answer "Cannot Determine"
+2026-10-30 21:55:50 | INFO | Total images: 2
+2026-10-30 21:55:51 | INFO | YOLO DETECTION | Image: 000000000034.jpg | Objects: 1
+2026-10-30 21:55:51 | INFO | CROP SUCCESS | Image: 000000000034.jpg | Class: zebra | Method: SINGLE
+2026-10-30 21:55:53 | INFO | SUCCESS | Image: 000000000034.jpg | Route: LOCAL_ANSWER | Latency: 3276.80 ms
+2026-10-30 21:55:53 | INFO | YOLO DETECTION | Image: 000000000036.jpg | Objects: 2
+2026-10-30 21:55:53 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: person | Method: SINGLE
+2026-10-30 21:55:53 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
+2026-10-30 21:55:55 | INFO | SUCCESS | Image: 000000000036.jpg | Route: LOCAL_ANSWER | Latency: 2295.18 ms
+2026-10-30 21:55:55 | INFO | Batch completed | Success: 2 | Failed: 0 | Generated Crops: 3
+2026-10-30 22:14:35 | INFO | ==================================================
+2026-10-30 22:14:35 | INFO | Pipeline batch started
+2026-10-30 22:14:35 | INFO | Question: Is there a zebra in the picture?
+2026-10-30 22:14:35 | INFO | Total images: 2
+2026-10-30 22:14:36 | INFO | YOLO DETECTION | Image: 000000000034.jpg | Objects: 1
+2026-10-30 22:14:36 | INFO | CROP SUCCESS | Image: 000000000034.jpg | Class: zebra | Method: SINGLE
+2026-10-30 22:14:39 | INFO | SUCCESS | Image: 000000000034.jpg | Route: LOCAL_ANSWER | Latency: 4555.14 ms
+2026-10-30 22:14:39 | INFO | YOLO DETECTION | Image: 000000000036.jpg | Objects: 2
+2026-10-30 22:14:39 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: person | Method: SINGLE
+2026-10-30 22:14:39 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
+2026-10-30 22:14:41 | INFO | SUCCESS | Image: 000000000036.jpg | Route: LOCAL_ANSWER | Latency: 2281.49 ms
+2026-10-30 22:14:41 | INFO | Batch completed | Success: 2 | Failed: 0 | Generated Crops: 3
+2026-10-30 22:57:57 | INFO | ==================================================
+2026-10-30 22:57:57 | INFO | Pipeline batch started
+2026-10-30 22:57:57 | INFO | Question: How many zebras are in the picture? if there is no zebra, answer "0"
+2026-10-30 22:57:57 | INFO | Total images: 2
+2026-10-30 22:57:58 | INFO | YOLO DETECTION | Image: 000000000034.jpg | Objects: 1
+2026-10-30 22:57:58 | INFO | CROP SUCCESS | Image: 000000000034.jpg | Class: zebra | Method: SINGLE
+2026-10-30 22:57:58 | INFO | SUCCESS | Image: 000000000034.jpg | Task: COUNT | Route: DETECTIONS | Latency: 1076.05 ms
+2026-10-30 22:57:58 | INFO | YOLO DETECTION | Image: 000000000036.jpg | Objects: 2
+2026-10-30 22:57:58 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: person | Method: SINGLE
+2026-10-30 22:57:58 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
+2026-10-30 22:57:58 | INFO | SUCCESS | Image: 000000000036.jpg | Task: COUNT | Route: DETECTIONS | Latency: 33.30 ms
+2026-10-30 22:57:58 | INFO | Batch completed | Success: 2 | Failed: 0 | Generated Crops: 3

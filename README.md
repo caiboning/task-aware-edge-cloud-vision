@@ -11,7 +11,7 @@ Our goal is to reduce communication overhead and end-to-end latency while mainta
 The planned application entry point is:
 
 ```bash
-python main.py
+python pipeline.py
 ```
 
 Once the inference pipeline is implemented, users will be able to:

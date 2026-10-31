@@ -1,0 +1,125 @@
+[
+    {
+        "image": "000000000034.jpg",
+        "question": "How many zebras are in the picture? if there is no zebra, answer \"0\"",
+        "answer": "YOLO detected 1 zebra(s).",
+        "requested_route": "DETECTIONS",
+        "route": "DETECTIONS",
+        "task_type": "COUNT",
+        "target_class": "zebra",
+        "used_image": "NONE",
+        "used_crop_path": null,
+        "detections": [
+            {
+                "class": "zebra",
+                "confidence": 0.9524,
+                "bbox": [
+                    1.08,
+                    22.69,
+                    441.21,
+                    402.42
+                ]
+            }
+        ],
+        "yolo_image_path": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\yolo_detections\\000000000034_jpg_yolo.jpg",
+        "crop_info": {
+            "zebra": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    0,
+                    3,
+                    464,
+                    422
+                ]
+            }
+        },
+        "crop_paths": {
+            "zebra": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000034_jpg_zebra_crop.jpg"
+        },
+        "metrics": {
+            "yolo_latency_ms": 1028.77,
+            "crop_latency_ms": 6.86,
+            "router_latency_ms": 2.87,
+            "vlm_latency_ms": 0.0,
+            "total_latency_ms": 1076.05,
+            "payload_bytes": 81
+        },
+        "status": "SUCCESS"
+    },
+    {
+        "image": "000000000036.jpg",
+        "question": "How many zebras are in the picture? if there is no zebra, answer \"0\"",
+        "answer": "YOLO detected 0 zebra(s).",
+        "requested_route": "DETECTIONS",
+        "route": "DETECTIONS",
+        "task_type": "COUNT",
+        "target_class": "zebra",
+        "used_image": "NONE",
+        "used_crop_path": null,
+        "detections": [
+            {
+                "class": "person",
+                "confidence": 0.8906,
+                "bbox": [
+                    174.35,
+                    158.22,
+                    465.74,
+                    639.99
+                ]
+            },
+            {
+                "class": "umbrella",
+                "confidence": 0.89,
+                "bbox": [
+                    1.49,
+                    54.16,
+                    455.94,
+                    489.62
+                ]
+            }
+        ],
+        "yolo_image_path": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\yolo_detections\\000000000036_jpg_yolo.jpg",
+        "crop_info": {
+            "person": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    159,
+                    134,
+                    481,
+                    640
+                ]
+            },
+            "umbrella": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    0,
+                    32,
+                    479,
+                    512
+                ]
+            }
+        },
+        "crop_paths": {
+            "person": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000036_jpg_person_crop.jpg",
+            "umbrella": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000036_jpg_umbrella_crop.jpg"
+        },
+        "metrics": {
+            "yolo_latency_ms": 26.84,
+            "crop_latency_ms": 2.05,
+            "router_latency_ms": 0.37,
+            "vlm_latency_ms": 0.0,
+            "total_latency_ms": 33.3,
+            "payload_bytes": 167
+        },
+        "status": "SUCCESS"
+    }
+]

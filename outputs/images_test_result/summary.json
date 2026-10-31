@@ -1,0 +1,25 @@
+{
+    "question": "How many zebras are in the picture? if there is no zebra, answer \"0\"",
+    "total_images": 2,
+    "successful_images": 2,
+    "failed_images": 0,
+    "success_rate_percent": 100.0,
+    "route_counts": {
+        "DETECTIONS": 2
+    },
+    "task_counts": {
+        "COUNT": 2
+    },
+    "crop_counts": {
+        "SINGLE": 3
+    },
+    "total_generated_crops": 3,
+    "crop_fallbacks": 0,
+    "average_latency_ms": 554.67,
+    "batch_latency_s": 1.111,
+    "total_payload_bytes": 248,
+    "average_payload_bytes": 124.0,
+    "yolo_model": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\models\\YOLO\\yolo11n_ncnn_model",
+    "vlm_model": "ahmadwaqar/smolvlm2-256m-video:q8_0",
+    "crop_iou_threshold": 0.3
+}
