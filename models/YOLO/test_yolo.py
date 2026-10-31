@@ -14,8 +14,12 @@ IMAGE_OUTPUT_DIR = OUTPUT_DIR / "images"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 IMAGE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# Load YOLO11n once
-detector = YOLODetector(device="cpu", confidence=0.25)
+# Select the model here (NCNN directory or .pt file) and load it once
+detector = YOLODetector(
+    model_path=ROOT / "models" / "YOLO" / "yolo11n_ncnn_model",
+    device="cpu",
+    confidence=0.25,
+)
 
 # Find all images
 image_paths = sorted([p for p in DATASET_DIR.iterdir() if p.suffix.lower() in {".jpg", ".jpeg", ".png"}])
