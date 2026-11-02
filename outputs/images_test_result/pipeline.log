@@ -167,3 +167,163 @@ FileNotFoundError: [Errno 2] No such file or directory: 'E:\\Code\\202Project\\t
 2026-10-30 22:57:58 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
 2026-10-30 22:57:58 | INFO | SUCCESS | Image: 000000000036.jpg | Task: COUNT | Route: DETECTIONS | Latency: 33.30 ms
 2026-10-30 22:57:58 | INFO | Batch completed | Success: 2 | Failed: 0 | Generated Crops: 3
+2026-11-01 13:30:40 | INFO | ==================================================
+2026-11-01 13:30:40 | INFO | Pipeline batch started
+2026-11-01 13:30:40 | INFO | Question: List the colors in the picture, as much as possible
+2026-11-01 13:30:40 | INFO | Total images: 2
+2026-11-01 13:30:42 | INFO | YOLO DETECTION | Image: 000000000034.jpg | Objects: 1
+2026-11-01 13:30:42 | INFO | CROP SUCCESS | Image: 000000000034.jpg | Class: zebra | Method: SINGLE
+2026-11-01 13:30:47 | INFO | SUCCESS | Image: 000000000034.jpg | Task: GENERAL | Route: LOCAL_ANSWER | Latency: 7140.03 ms
+2026-11-01 13:30:47 | INFO | YOLO DETECTION | Image: 000000000036.jpg | Objects: 2
+2026-11-01 13:30:47 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: person | Method: SINGLE
+2026-11-01 13:30:47 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
+2026-11-01 13:30:49 | INFO | SUCCESS | Image: 000000000036.jpg | Task: GENERAL | Route: LOCAL_ANSWER | Latency: 2393.80 ms
+2026-11-01 13:30:49 | INFO | Batch completed | Success: 2 | Failed: 0 | Generated Crops: 3
+2026-11-01 16:03:28 | INFO | ==================================================
+2026-11-01 16:03:28 | INFO | Pipeline batch started
+2026-11-01 16:03:28 | INFO | Question: Is there a car in the picture?
+2026-11-01 16:03:28 | INFO | Total images: 6
+2026-11-01 16:03:31 | INFO | YOLO DETECTION | Image: 000000000034.jpg | Objects: 1
+2026-11-01 16:03:31 | INFO | CROP SUCCESS | Image: 000000000034.jpg | Class: zebra | Method: SINGLE
+2026-11-01 16:03:31 | INFO | SUCCESS | Image: 000000000034.jpg | Task: EXISTENCE | Route: DETECTIONS | Latency: 2989.48 ms
+2026-11-01 16:03:32 | INFO | YOLO DETECTION | Image: 000000000036.jpg | Objects: 2
+2026-11-01 16:03:32 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: person | Method: SINGLE
+2026-11-01 16:03:32 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
+2026-11-01 16:03:32 | INFO | SUCCESS | Image: 000000000036.jpg | Task: EXISTENCE | Route: DETECTIONS | Latency: 717.68 ms
+2026-11-01 16:03:33 | INFO | YOLO DETECTION | Image: 000000000127.jpg | Objects: 7
+2026-11-01 16:03:33 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: cup | Method: SINGLE
+2026-11-01 16:03:33 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: knife | Method: SINGLE
+2026-11-01 16:03:33 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: sandwich | Method: SINGLE
+2026-11-01 16:03:33 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: dining table | Method: SINGLE
+2026-11-01 16:03:33 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: book | Method: SINGLE
+2026-11-01 16:03:33 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: spoon | Method: SINGLE
+2026-11-01 16:03:33 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: potted plant | Method: SINGLE
+2026-11-01 16:03:33 | INFO | SUCCESS | Image: 000000000127.jpg | Task: EXISTENCE | Route: DETECTIONS | Latency: 793.51 ms
+2026-11-01 16:03:34 | INFO | YOLO DETECTION | Image: 000000000133.jpg | Objects: 2
+2026-11-01 16:03:34 | INFO | CROP SUCCESS | Image: 000000000133.jpg | Class: bed | Method: SINGLE
+2026-11-01 16:03:34 | INFO | CROP SUCCESS | Image: 000000000133.jpg | Class: oven | Method: SINGLE
+2026-11-01 16:03:34 | INFO | SUCCESS | Image: 000000000133.jpg | Task: EXISTENCE | Route: DETECTIONS | Latency: 737.11 ms
+2026-11-01 16:03:34 | INFO | YOLO DETECTION | Image: 000000000136.jpg | Objects: 4
+2026-11-01 16:03:34 | WARNING | CROP FALLBACK | Image: 000000000136.jpg | Class: giraffe | Reason: MULTIPLE_DISCONNECTED_REGIONS
+2026-11-01 16:03:34 | INFO | CROP SUCCESS | Image: 000000000136.jpg | Class: person | Method: MERGED
+2026-11-01 16:03:34 | INFO | SUCCESS | Image: 000000000136.jpg | Task: EXISTENCE | Route: DETECTIONS | Latency: 712.94 ms
+2026-11-01 16:03:35 | INFO | YOLO DETECTION | Image: 000000000138.jpg | Objects: 7
+2026-11-01 16:03:35 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: refrigerator | Method: SINGLE
+2026-11-01 16:03:35 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: oven | Method: SINGLE
+2026-11-01 16:03:35 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: clock | Method: SINGLE
+2026-11-01 16:03:35 | WARNING | CROP FALLBACK | Image: 000000000138.jpg | Class: vase | Reason: MULTIPLE_DISCONNECTED_REGIONS
+2026-11-01 16:03:35 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: potted plant | Method: SINGLE
+2026-11-01 16:03:35 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: bowl | Method: SINGLE
+2026-11-01 16:03:35 | INFO | SUCCESS | Image: 000000000138.jpg | Task: EXISTENCE | Route: DETECTIONS | Latency: 718.05 ms
+2026-11-01 16:03:35 | INFO | Batch completed | Success: 6 | Failed: 0 | Generated Crops: 18
+2026-11-01 16:07:51 | INFO | ==================================================
+2026-11-01 16:07:51 | INFO | Pipeline batch started
+2026-11-01 16:07:51 | INFO | Question: How many people are in the picture?
+2026-11-01 16:07:51 | INFO | Total images: 6
+2026-11-01 16:07:54 | INFO | YOLO DETECTION | Image: 000000000034.jpg | Objects: 1
+2026-11-01 16:07:54 | INFO | CROP SUCCESS | Image: 000000000034.jpg | Class: zebra | Method: SINGLE
+2026-11-01 16:07:54 | INFO | SUCCESS | Image: 000000000034.jpg | Task: COUNT | Route: DETECTIONS | Latency: 2807.31 ms
+2026-11-01 16:07:54 | INFO | YOLO DETECTION | Image: 000000000036.jpg | Objects: 2
+2026-11-01 16:07:54 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: person | Method: SINGLE
+2026-11-01 16:07:54 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
+2026-11-01 16:07:54 | INFO | SUCCESS | Image: 000000000036.jpg | Task: COUNT | Route: DETECTIONS | Latency: 800.94 ms
+2026-11-01 16:07:55 | INFO | YOLO DETECTION | Image: 000000000127.jpg | Objects: 7
+2026-11-01 16:07:55 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: cup | Method: SINGLE
+2026-11-01 16:07:55 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: knife | Method: SINGLE
+2026-11-01 16:07:55 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: sandwich | Method: SINGLE
+2026-11-01 16:07:55 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: dining table | Method: SINGLE
+2026-11-01 16:07:55 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: book | Method: SINGLE
+2026-11-01 16:07:55 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: spoon | Method: SINGLE
+2026-11-01 16:07:55 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: potted plant | Method: SINGLE
+2026-11-01 16:07:55 | INFO | SUCCESS | Image: 000000000127.jpg | Task: COUNT | Route: DETECTIONS | Latency: 833.19 ms
+2026-11-01 16:07:56 | INFO | YOLO DETECTION | Image: 000000000133.jpg | Objects: 2
+2026-11-01 16:07:56 | INFO | CROP SUCCESS | Image: 000000000133.jpg | Class: bed | Method: SINGLE
+2026-11-01 16:07:56 | INFO | CROP SUCCESS | Image: 000000000133.jpg | Class: oven | Method: SINGLE
+2026-11-01 16:07:56 | INFO | SUCCESS | Image: 000000000133.jpg | Task: COUNT | Route: DETECTIONS | Latency: 787.43 ms
+2026-11-01 16:07:57 | INFO | YOLO DETECTION | Image: 000000000136.jpg | Objects: 4
+2026-11-01 16:07:57 | WARNING | CROP FALLBACK | Image: 000000000136.jpg | Class: giraffe | Reason: MULTIPLE_DISCONNECTED_REGIONS
+2026-11-01 16:07:57 | INFO | CROP SUCCESS | Image: 000000000136.jpg | Class: person | Method: MERGED
+2026-11-01 16:07:57 | INFO | SUCCESS | Image: 000000000136.jpg | Task: COUNT | Route: DETECTIONS | Latency: 794.17 ms
+2026-11-01 16:07:58 | INFO | YOLO DETECTION | Image: 000000000138.jpg | Objects: 7
+2026-11-01 16:07:58 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: refrigerator | Method: SINGLE
+2026-11-01 16:07:58 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: oven | Method: SINGLE
+2026-11-01 16:07:58 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: clock | Method: SINGLE
+2026-11-01 16:07:58 | WARNING | CROP FALLBACK | Image: 000000000138.jpg | Class: vase | Reason: MULTIPLE_DISCONNECTED_REGIONS
+2026-11-01 16:07:58 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: potted plant | Method: SINGLE
+2026-11-01 16:07:58 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: bowl | Method: SINGLE
+2026-11-01 16:07:58 | INFO | SUCCESS | Image: 000000000138.jpg | Task: COUNT | Route: DETECTIONS | Latency: 807.40 ms
+2026-11-01 16:07:58 | INFO | Batch completed | Success: 6 | Failed: 0 | Generated Crops: 18
+2026-11-01 16:08:37 | INFO | ==================================================
+2026-11-01 16:08:37 | INFO | Pipeline batch started
+2026-11-01 16:08:37 | INFO | Question: WHat color is the person's shirt?
+2026-11-01 16:08:37 | INFO | Total images: 6
+2026-11-01 16:08:40 | INFO | YOLO DETECTION | Image: 000000000034.jpg | Objects: 1
+2026-11-01 16:08:40 | INFO | CROP SUCCESS | Image: 000000000034.jpg | Class: zebra | Method: SINGLE
+2026-11-01 16:08:45 | INFO | SUCCESS | Image: 000000000034.jpg | Task: ATTRIBUTE | Route: FULL_IMAGE | Latency: 7784.83 ms
+2026-11-01 16:08:46 | INFO | YOLO DETECTION | Image: 000000000036.jpg | Objects: 2
+2026-11-01 16:08:46 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: person | Method: SINGLE
+2026-11-01 16:08:46 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
+2026-11-01 16:08:48 | INFO | SUCCESS | Image: 000000000036.jpg | Task: ATTRIBUTE | Route: FULL_IMAGE | Latency: 2964.86 ms
+2026-11-01 16:08:49 | INFO | YOLO DETECTION | Image: 000000000127.jpg | Objects: 7
+2026-11-01 16:08:49 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: cup | Method: SINGLE
+2026-11-01 16:08:49 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: knife | Method: SINGLE
+2026-11-01 16:08:49 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: sandwich | Method: SINGLE
+2026-11-01 16:08:49 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: dining table | Method: SINGLE
+2026-11-01 16:08:49 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: book | Method: SINGLE
+2026-11-01 16:08:49 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: spoon | Method: SINGLE
+2026-11-01 16:08:49 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: potted plant | Method: SINGLE
+2026-11-01 16:08:51 | INFO | SUCCESS | Image: 000000000127.jpg | Task: ATTRIBUTE | Route: FULL_IMAGE | Latency: 2961.33 ms
+2026-11-01 16:08:52 | INFO | YOLO DETECTION | Image: 000000000133.jpg | Objects: 2
+2026-11-01 16:08:52 | INFO | CROP SUCCESS | Image: 000000000133.jpg | Class: bed | Method: SINGLE
+2026-11-01 16:08:52 | INFO | CROP SUCCESS | Image: 000000000133.jpg | Class: oven | Method: SINGLE
+2026-11-01 16:08:54 | INFO | SUCCESS | Image: 000000000133.jpg | Task: ATTRIBUTE | Route: FULL_IMAGE | Latency: 2998.28 ms
+2026-11-01 16:08:55 | INFO | YOLO DETECTION | Image: 000000000136.jpg | Objects: 4
+2026-11-01 16:08:55 | WARNING | CROP FALLBACK | Image: 000000000136.jpg | Class: giraffe | Reason: MULTIPLE_DISCONNECTED_REGIONS
+2026-11-01 16:08:55 | INFO | CROP SUCCESS | Image: 000000000136.jpg | Class: person | Method: MERGED
+2026-11-01 16:08:57 | INFO | SUCCESS | Image: 000000000136.jpg | Task: ATTRIBUTE | Route: FULL_IMAGE | Latency: 3014.87 ms
+2026-11-01 16:08:58 | INFO | YOLO DETECTION | Image: 000000000138.jpg | Objects: 7
+2026-11-01 16:08:58 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: refrigerator | Method: SINGLE
+2026-11-01 16:08:58 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: oven | Method: SINGLE
+2026-11-01 16:08:58 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: clock | Method: SINGLE
+2026-11-01 16:08:58 | WARNING | CROP FALLBACK | Image: 000000000138.jpg | Class: vase | Reason: MULTIPLE_DISCONNECTED_REGIONS
+2026-11-01 16:08:58 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: potted plant | Method: SINGLE
+2026-11-01 16:08:58 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: bowl | Method: SINGLE
+2026-11-01 16:09:00 | INFO | SUCCESS | Image: 000000000138.jpg | Task: ATTRIBUTE | Route: FULL_IMAGE | Latency: 2999.96 ms
+2026-11-01 16:09:00 | INFO | Batch completed | Success: 6 | Failed: 0 | Generated Crops: 18
+2026-11-01 16:09:45 | INFO | ==================================================
+2026-11-01 16:09:45 | INFO | Pipeline batch started
+2026-11-01 16:09:45 | INFO | Question: What is the person doing? If there is no person in the image, answer "Nothing found"
+2026-11-01 16:09:45 | INFO | Total images: 6
+2026-11-01 16:09:47 | INFO | YOLO DETECTION | Image: 000000000034.jpg | Objects: 1
+2026-11-01 16:09:47 | INFO | CROP SUCCESS | Image: 000000000034.jpg | Class: zebra | Method: SINGLE
+2026-11-01 16:09:50 | INFO | SUCCESS | Image: 000000000034.jpg | Task: ATTRIBUTE | Route: FULL_IMAGE | Latency: 5071.75 ms
+2026-11-01 16:09:50 | INFO | YOLO DETECTION | Image: 000000000036.jpg | Objects: 2
+2026-11-01 16:09:50 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: person | Method: SINGLE
+2026-11-01 16:09:50 | INFO | CROP SUCCESS | Image: 000000000036.jpg | Class: umbrella | Method: SINGLE
+2026-11-01 16:09:53 | INFO | SUCCESS | Image: 000000000036.jpg | Task: ATTRIBUTE | Route: FULL_IMAGE | Latency: 2980.95 ms
+2026-11-01 16:09:53 | INFO | YOLO DETECTION | Image: 000000000127.jpg | Objects: 7
+2026-11-01 16:09:53 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: cup | Method: SINGLE
+2026-11-01 16:09:53 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: knife | Method: SINGLE
+2026-11-01 16:09:53 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: sandwich | Method: SINGLE
+2026-11-01 16:09:53 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: dining table | Method: SINGLE
+2026-11-01 16:09:53 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: book | Method: SINGLE
+2026-11-01 16:09:53 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: spoon | Method: SINGLE
+2026-11-01 16:09:53 | INFO | CROP SUCCESS | Image: 000000000127.jpg | Class: potted plant | Method: SINGLE
+2026-11-01 16:09:56 | INFO | SUCCESS | Image: 000000000127.jpg | Task: ATTRIBUTE | Route: FULL_IMAGE | Latency: 2885.76 ms
+2026-11-01 16:09:56 | INFO | YOLO DETECTION | Image: 000000000133.jpg | Objects: 2
+2026-11-01 16:09:56 | INFO | CROP SUCCESS | Image: 000000000133.jpg | Class: bed | Method: SINGLE
+2026-11-01 16:09:56 | INFO | CROP SUCCESS | Image: 000000000133.jpg | Class: oven | Method: SINGLE
+2026-11-01 16:09:59 | INFO | SUCCESS | Image: 000000000133.jpg | Task: ATTRIBUTE | Route: FULL_IMAGE | Latency: 3003.27 ms
+2026-11-01 16:09:59 | INFO | YOLO DETECTION | Image: 000000000136.jpg | Objects: 4
+2026-11-01 16:09:59 | WARNING | CROP FALLBACK | Image: 000000000136.jpg | Class: giraffe | Reason: MULTIPLE_DISCONNECTED_REGIONS
+2026-11-01 16:09:59 | INFO | CROP SUCCESS | Image: 000000000136.jpg | Class: person | Method: MERGED
+2026-11-01 16:10:02 | INFO | SUCCESS | Image: 000000000136.jpg | Task: ATTRIBUTE | Route: FULL_IMAGE | Latency: 3013.77 ms
+2026-11-01 16:10:02 | INFO | YOLO DETECTION | Image: 000000000138.jpg | Objects: 7
+2026-11-01 16:10:02 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: refrigerator | Method: SINGLE
+2026-11-01 16:10:02 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: oven | Method: SINGLE
+2026-11-01 16:10:02 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: clock | Method: SINGLE
+2026-11-01 16:10:02 | WARNING | CROP FALLBACK | Image: 000000000138.jpg | Class: vase | Reason: MULTIPLE_DISCONNECTED_REGIONS
+2026-11-01 16:10:02 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: potted plant | Method: SINGLE
+2026-11-01 16:10:02 | INFO | CROP SUCCESS | Image: 000000000138.jpg | Class: bowl | Method: SINGLE
+2026-11-01 16:10:05 | INFO | SUCCESS | Image: 000000000138.jpg | Task: ATTRIBUTE | Route: FULL_IMAGE | Latency: 3058.09 ms
+2026-11-01 16:10:05 | INFO | Batch completed | Success: 6 | Failed: 0 | Generated Crops: 18

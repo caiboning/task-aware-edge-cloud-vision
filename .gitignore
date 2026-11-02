@@ -1,5 +1,13 @@
-.env
-.env.*
-!.env.example
+# Local model weights
+*.gguf
+*.pt
+*.pth
+*.onnx
+*.safetensors
 
+# YOLO NCNN model files
+models/YOLO/yolo11n_ncnn_model/
+
+# Local model caches
+.cache/
 __pycache__/

@@ -79,8 +79,8 @@ def contains_phrase(text, phrase):
 
 def find_target_class(question, detections=None):
     """
-    Identify target classes from the question,
-    independently of YOLO detections.
+    Identify a COCO target class from
+    the target description produced by Qwen.
 
     Returns:
         class name if exactly one class is matched
@@ -108,178 +108,112 @@ def find_target_class(question, detections=None):
 
 
 # ==============================
-# Task Router
+# Semantic Task Router
 # ==============================
 
-def route_task(question, detections=None):
+def route_task(task, detections=None):
     """
-    Rule-based task classification.
+    Map one Qwen task to the existing
+    pipeline route names.
+
+    Input:
+        {
+            "task_type": str,
+            "target": str | None,
+            "attribute": str | None
+        }
 
     Returns:
         {
             "route": str,
             "task_type": str,
-            "target_class": str | None
+            "target_class": str | None,
+            "target": str | None,
+            "attribute": str | None,
+            "semantic_type": str
         }
     """
 
-    q = normalize_question(question)
-
-    target_class = find_target_class(question)
-
-    # --------------------------
-    # 1. Scene-level Questions
-    # --------------------------
-
-    scene_keywords = [
-        "main color",
-        "dominant color",
-        "overall color",
-        "main colour",
-        "dominant colour",
-        "overall colour",
-        "describe the scene",
-        "describe the image",
-        "describe the picture",
-        "what is happening",
-        "what's happening",
-        "whole image",
-        "entire image",
-        "whole picture"
-    ]
-
-    if any(k in q for k in scene_keywords):
-        return {
-            "route": "FULL_IMAGE",
-            "task_type": "SCENE",
-            "target_class": None
-        }
-
-    # --------------------------
-    # 2. Text Recognition
-    # --------------------------
-
-    text_keywords = [
-        "what text",
-        "read the text",
-        "what words",
-        "what is written",
-        "visible text",
-        "read the sign",
-        "what does the sign say"
-    ]
-
-    if any(k in q for k in text_keywords):
-        return {
-            "route": "FULL_IMAGE",
-            "task_type": "TEXT",
-            "target_class": None
-        }
-
-    # --------------------------
-    # 3. Object Existence
-    # --------------------------
-
-    existence_patterns = [
-        r"\bis there\b",
-        r"\bare there\b",
-        r"\bdo you see\b",
-        r"\bcan you see\b",
-        r"\bdoes .* contain\b",
-        r"\bdoes .* have\b",
-        r"\bis .* present\b",
-        r"\bare .* present\b"
-    ]
-
-    if (
-        target_class is not None
-        and any(
-            re.search(pattern, q)
-            for pattern in existence_patterns
+    if not isinstance(task, dict):
+        raise TypeError(
+            "route_task expects a Qwen task dictionary"
         )
-    ):
-        return {
-            "route": "DETECTIONS",
-            "task_type": "EXISTENCE",
-            "target_class": target_class
-        }
 
-    # --------------------------
-    # 4. Object Counting
-    # --------------------------
+    kind = task.get("task_type")
+    target = task.get("target")
+    attribute = task.get("attribute")
 
-    count_keywords = [
-        "how many",
-        "count",
-        "number of"
-    ]
+    target_class = find_target_class(
+        str(target or "")
+    )
 
-    if (
-        target_class is not None
-        and any(k in q for k in count_keywords)
-    ):
-        return {
-            "route": "DETECTIONS",
-            "task_type": "COUNT",
-            "target_class": target_class
-        }
+    if kind in ("existence", "counting", "listing"):
 
-    # --------------------------
-    # 5. Object Listing
-    # --------------------------
+        general = (
+            target is None
+            or str(target).lower().strip() in {
+                "image",
+                "picture",
+                "scene",
+                "object",
+                "objects",
+                "item",
+                "items",
+                "all objects",
+                "everything"
+            }
+        )
 
-    list_keywords = [
-        "what objects",
-        "which objects",
-        "list the objects",
-        "what items",
-        "which items",
-        "what can you see",
-        "what is in the image",
-        "what is in this picture"
-    ]
+        if kind == "listing" and general:
+            route = "DETECTIONS"
+            task_type = "LIST"
 
-    if any(k in q for k in list_keywords):
-        return {
-            "route": "DETECTIONS",
-            "task_type": "LIST",
-            "target_class": None
-        }
+        elif target_class is None:
+            route = "UNSUPPORTED"
+            task_type = kind.upper()
 
-    # --------------------------
-    # 6. Object Attributes
-    # --------------------------
+        else:
+            route = "DETECTIONS"
+            task_type = {
+                "existence": "EXISTENCE",
+                "counting": "COUNT",
+                "listing": "LIST"
+            }[kind]
 
-    attribute_keywords = [
-        "color",
-        "colour",
-        "wearing",
-        "clothes",
-        "clothing",
-        "shirt",
-        "jacket",
-        "appearance",
-        "look like",
-        "shape",
-        "pattern"
-    ]
+    elif kind == "attribute":
 
-    if (
-        target_class is not None
-        and any(k in q for k in attribute_keywords)
-    ):
-        return {
-            "route": "CROP",
-            "task_type": "ATTRIBUTE",
-            "target_class": target_class
-        }
+        if target_class:
+            route = "CROP"
+        else:
+            route = "FULL_IMAGE"
 
-    # --------------------------
-    # 7. Default
-    # --------------------------
+        task_type = "ATTRIBUTE"
+
+    elif kind == "ocr":
+
+        route = "FULL_IMAGE"
+        task_type = "TEXT"
+
+    elif kind == "complex":
+
+        route = "FULL_IMAGE"
+        task_type = "COMPLEX"
+
+    elif kind == "cloud":
+
+        route = "CLOUD"
+        task_type = "CLOUD"
+
+    else:
+
+        route = "UNSUPPORTED"
+        task_type = "UNKNOWN"
 
     return {
-        "route": "LOCAL_ANSWER",
-        "task_type": "GENERAL",
-        "target_class": target_class
+        "route": route,
+        "task_type": task_type,
+        "target_class": target_class,
+        "target": target,
+        "attribute": attribute,
+        "semantic_type": kind
     }

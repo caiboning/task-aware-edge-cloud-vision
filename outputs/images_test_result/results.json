@@ -1,13 +1,43 @@
 [
     {
         "image": "000000000034.jpg",
-        "question": "How many zebras are in the picture? if there is no zebra, answer \"0\"",
-        "answer": "YOLO detected 1 zebra(s).",
-        "requested_route": "DETECTIONS",
-        "route": "DETECTIONS",
-        "task_type": "COUNT",
-        "target_class": "zebra",
-        "used_image": "NONE",
+        "question": "What is the person doing? If there is no person in the image, answer \"Nothing found\"",
+        "task_plan": {
+            "tasks": [
+                {
+                    "task_type": "attribute",
+                    "target": "Nothing found",
+                    "attribute": "person"
+                }
+            ]
+        },
+        "decisions": [
+            {
+                "route": "FULL_IMAGE",
+                "task_type": "ATTRIBUTE",
+                "target_class": null,
+                "target": "Nothing found",
+                "attribute": "person",
+                "semantic_type": "attribute"
+            }
+        ],
+        "task_results": [
+            {
+                "task_type": "ATTRIBUTE",
+                "semantic_type": "attribute",
+                "route": "FULL_IMAGE",
+                "requested_route": "FULL_IMAGE",
+                "target_class": null,
+                "answer": "1. The zebra has a head and legs that are visible.\n2. There is grass on the ground where it stands.\n3. It appears to be grazing or eating something.",
+                "status": "SUCCESS"
+            }
+        ],
+        "answer": "1. The zebra has a head and legs that are visible.\n2. There is grass on the ground where it stands.\n3. It appears to be grazing or eating something.",
+        "requested_route": "FULL_IMAGE",
+        "route": "FULL_IMAGE",
+        "task_type": "ATTRIBUTE",
+        "target_class": null,
+        "used_image": "FULL_IMAGE",
         "used_crop_path": null,
         "detections": [
             {
@@ -40,24 +70,55 @@
             "zebra": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000034_jpg_zebra_crop.jpg"
         },
         "metrics": {
-            "yolo_latency_ms": 1028.77,
-            "crop_latency_ms": 6.86,
-            "router_latency_ms": 2.87,
-            "vlm_latency_ms": 0.0,
-            "total_latency_ms": 1076.05,
-            "payload_bytes": 81
+            "llm_latency_ms": 1694.03,
+            "yolo_latency_ms": 1059.56,
+            "crop_latency_ms": 6.71,
+            "router_latency_ms": 2.83,
+            "vlm_latency_ms": 2123.18,
+            "total_latency_ms": 5071.75,
+            "payload_bytes": 133411
         },
         "status": "SUCCESS"
     },
     {
         "image": "000000000036.jpg",
-        "question": "How many zebras are in the picture? if there is no zebra, answer \"0\"",
-        "answer": "YOLO detected 0 zebra(s).",
-        "requested_route": "DETECTIONS",
-        "route": "DETECTIONS",
-        "task_type": "COUNT",
-        "target_class": "zebra",
-        "used_image": "NONE",
+        "question": "What is the person doing? If there is no person in the image, answer \"Nothing found\"",
+        "task_plan": {
+            "tasks": [
+                {
+                    "task_type": "attribute",
+                    "target": "Nothing found",
+                    "attribute": "person"
+                }
+            ]
+        },
+        "decisions": [
+            {
+                "route": "FULL_IMAGE",
+                "task_type": "ATTRIBUTE",
+                "target_class": null,
+                "target": "Nothing found",
+                "attribute": "person",
+                "semantic_type": "attribute"
+            }
+        ],
+        "task_results": [
+            {
+                "task_type": "ATTRIBUTE",
+                "semantic_type": "attribute",
+                "route": "FULL_IMAGE",
+                "requested_route": "FULL_IMAGE",
+                "target_class": null,
+                "answer": "1. The person appears to be holding a pink umbrella and standing outdoors with their arms outstretched.\n2. There are no other people or objects visible in the scene besides the person and the umbrella.\n3. The person is not wearing any shoes or sandals, as they appear to have been walking on land without footwear.",
+                "status": "SUCCESS"
+            }
+        ],
+        "answer": "1. The person appears to be holding a pink umbrella and standing outdoors with their arms outstretched.\n2. There are no other people or objects visible in the scene besides the person and the umbrella.\n3. The person is not wearing any shoes or sandals, as they appear to have been walking on land without footwear.",
+        "requested_route": "FULL_IMAGE",
+        "route": "FULL_IMAGE",
+        "task_type": "ATTRIBUTE",
+        "target_class": null,
+        "used_image": "FULL_IMAGE",
         "used_crop_path": null,
         "detections": [
             {
@@ -113,12 +174,654 @@
             "umbrella": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000036_jpg_umbrella_crop.jpg"
         },
         "metrics": {
-            "yolo_latency_ms": 26.84,
+            "llm_latency_ms": 649.26,
+            "yolo_latency_ms": 24.59,
             "crop_latency_ms": 2.05,
-            "router_latency_ms": 0.37,
-            "vlm_latency_ms": 0.0,
-            "total_latency_ms": 33.3,
-            "payload_bytes": 167
+            "router_latency_ms": 0.19,
+            "vlm_latency_ms": 2151.2,
+            "total_latency_ms": 2980.95,
+            "payload_bytes": 86717
+        },
+        "status": "SUCCESS"
+    },
+    {
+        "image": "000000000127.jpg",
+        "question": "What is the person doing? If there is no person in the image, answer \"Nothing found\"",
+        "task_plan": {
+            "tasks": [
+                {
+                    "task_type": "attribute",
+                    "target": "Nothing found",
+                    "attribute": "person"
+                }
+            ]
+        },
+        "decisions": [
+            {
+                "route": "FULL_IMAGE",
+                "task_type": "ATTRIBUTE",
+                "target_class": null,
+                "target": "Nothing found",
+                "attribute": "person",
+                "semantic_type": "attribute"
+            }
+        ],
+        "task_results": [
+            {
+                "task_type": "ATTRIBUTE",
+                "semantic_type": "attribute",
+                "route": "FULL_IMAGE",
+                "requested_route": "FULL_IMAGE",
+                "target_class": null,
+                "answer": "0",
+                "status": "SUCCESS"
+            }
+        ],
+        "answer": "0",
+        "requested_route": "FULL_IMAGE",
+        "route": "FULL_IMAGE",
+        "task_type": "ATTRIBUTE",
+        "target_class": null,
+        "used_image": "FULL_IMAGE",
+        "used_crop_path": null,
+        "detections": [
+            {
+                "class": "cup",
+                "confidence": 0.8962,
+                "bbox": [
+                    381.49,
+                    223.1,
+                    559.71,
+                    347.27
+                ]
+            },
+            {
+                "class": "knife",
+                "confidence": 0.7686,
+                "bbox": [
+                    300.47,
+                    286.46,
+                    400.49,
+                    443.25
+                ]
+            },
+            {
+                "class": "sandwich",
+                "confidence": 0.5917,
+                "bbox": [
+                    181.2,
+                    267.06,
+                    307.75,
+                    403.36
+                ]
+            },
+            {
+                "class": "dining table",
+                "confidence": 0.4533,
+                "bbox": [
+                    86.75,
+                    164.88,
+                    640.0,
+                    477.05
+                ]
+            },
+            {
+                "class": "book",
+                "confidence": 0.3915,
+                "bbox": [
+                    256.77,
+                    193.21,
+                    383.35,
+                    271.96
+                ]
+            },
+            {
+                "class": "spoon",
+                "confidence": 0.3171,
+                "bbox": [
+                    345.98,
+                    275.12,
+                    432.91,
+                    359.18
+                ]
+            },
+            {
+                "class": "potted plant",
+                "confidence": 0.2504,
+                "bbox": [
+                    223.26,
+                    55.16,
+                    265.49,
+                    119.98
+                ]
+            }
+        ],
+        "yolo_image_path": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\yolo_detections\\000000000127_jpg_yolo.jpg",
+        "crop_info": {
+            "cup": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    372,
+                    216,
+                    569,
+                    354
+                ]
+            },
+            "knife": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    295,
+                    278,
+                    406,
+                    452
+                ]
+            },
+            "sandwich": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    174,
+                    260,
+                    315,
+                    411
+                ]
+            },
+            "dining table": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    59,
+                    149,
+                    640,
+                    481
+                ]
+            },
+            "book": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    250,
+                    189,
+                    390,
+                    276
+                ]
+            },
+            "spoon": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    341,
+                    270,
+                    438,
+                    364
+                ]
+            },
+            "potted plant": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    221,
+                    51,
+                    268,
+                    124
+                ]
+            }
+        },
+        "crop_paths": {
+            "cup": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000127_jpg_cup_crop.jpg",
+            "knife": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000127_jpg_knife_crop.jpg",
+            "sandwich": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000127_jpg_sandwich_crop.jpg",
+            "dining table": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000127_jpg_dining_table_crop.jpg",
+            "book": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000127_jpg_book_crop.jpg",
+            "spoon": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000127_jpg_spoon_crop.jpg",
+            "potted plant": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000127_jpg_potted_plant_crop.jpg"
+        },
+        "metrics": {
+            "llm_latency_ms": 634.04,
+            "yolo_latency_ms": 24.01,
+            "crop_latency_ms": 5.22,
+            "router_latency_ms": 0.18,
+            "vlm_latency_ms": 2071.46,
+            "total_latency_ms": 2885.76,
+            "payload_bytes": 82330
+        },
+        "status": "SUCCESS"
+    },
+    {
+        "image": "000000000133.jpg",
+        "question": "What is the person doing? If there is no person in the image, answer \"Nothing found\"",
+        "task_plan": {
+            "tasks": [
+                {
+                    "task_type": "attribute",
+                    "target": "Nothing found",
+                    "attribute": "person"
+                }
+            ]
+        },
+        "decisions": [
+            {
+                "route": "FULL_IMAGE",
+                "task_type": "ATTRIBUTE",
+                "target_class": null,
+                "target": "Nothing found",
+                "attribute": "person",
+                "semantic_type": "attribute"
+            }
+        ],
+        "task_results": [
+            {
+                "task_type": "ATTRIBUTE",
+                "semantic_type": "attribute",
+                "route": "FULL_IMAGE",
+                "requested_route": "FULL_IMAGE",
+                "target_class": null,
+                "answer": "0",
+                "status": "SUCCESS"
+            }
+        ],
+        "answer": "0",
+        "requested_route": "FULL_IMAGE",
+        "route": "FULL_IMAGE",
+        "task_type": "ATTRIBUTE",
+        "target_class": null,
+        "used_image": "FULL_IMAGE",
+        "used_crop_path": null,
+        "detections": [
+            {
+                "class": "bed",
+                "confidence": 0.4905,
+                "bbox": [
+                    6.74,
+                    9.34,
+                    584.53,
+                    447.98
+                ]
+            },
+            {
+                "class": "oven",
+                "confidence": 0.3216,
+                "bbox": [
+                    275.32,
+                    200.04,
+                    527.28,
+                    380.3
+                ]
+            }
+        ],
+        "yolo_image_path": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\yolo_detections\\000000000133_jpg_yolo.jpg",
+        "crop_info": {
+            "bed": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    0,
+                    0,
+                    614,
+                    470
+                ]
+            },
+            "oven": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    262,
+                    191,
+                    540,
+                    390
+                ]
+            }
+        },
+        "crop_paths": {
+            "bed": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000133_jpg_bed_crop.jpg",
+            "oven": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000133_jpg_oven_crop.jpg"
+        },
+        "metrics": {
+            "llm_latency_ms": 739.98,
+            "yolo_latency_ms": 30.48,
+            "crop_latency_ms": 1.65,
+            "router_latency_ms": 0.18,
+            "vlm_latency_ms": 2072.68,
+            "total_latency_ms": 3003.27,
+            "payload_bytes": 52143
+        },
+        "status": "SUCCESS"
+    },
+    {
+        "image": "000000000136.jpg",
+        "question": "What is the person doing? If there is no person in the image, answer \"Nothing found\"",
+        "task_plan": {
+            "tasks": [
+                {
+                    "task_type": "attribute",
+                    "target": "Nothing found",
+                    "attribute": "person"
+                }
+            ]
+        },
+        "decisions": [
+            {
+                "route": "FULL_IMAGE",
+                "task_type": "ATTRIBUTE",
+                "target_class": null,
+                "target": "Nothing found",
+                "attribute": "person",
+                "semantic_type": "attribute"
+            }
+        ],
+        "task_results": [
+            {
+                "task_type": "ATTRIBUTE",
+                "semantic_type": "attribute",
+                "route": "FULL_IMAGE",
+                "requested_route": "FULL_IMAGE",
+                "target_class": null,
+                "answer": "1. The woman and man are standing next to each other at a zoo enclosure.\n2. They appear to be observing or interacting with the giraffes.\n3. There's an open area where they can observe the giraffes from different angles.\n4. Their actions suggest that they might be observing the giraffes, possibly in their natural habitat.",
+                "status": "SUCCESS"
+            }
+        ],
+        "answer": "1. The woman and man are standing next to each other at a zoo enclosure.\n2. They appear to be observing or interacting with the giraffes.\n3. There's an open area where they can observe the giraffes from different angles.\n4. Their actions suggest that they might be observing the giraffes, possibly in their natural habitat.",
+        "requested_route": "FULL_IMAGE",
+        "route": "FULL_IMAGE",
+        "task_type": "ATTRIBUTE",
+        "target_class": null,
+        "used_image": "FULL_IMAGE",
+        "used_crop_path": null,
+        "detections": [
+            {
+                "class": "giraffe",
+                "confidence": 0.9376,
+                "bbox": [
+                    81.45,
+                    116.71,
+                    265.39,
+                    371.6
+                ]
+            },
+            {
+                "class": "giraffe",
+                "confidence": 0.913,
+                "bbox": [
+                    316.67,
+                    125.81,
+                    446.54,
+                    298.8
+                ]
+            },
+            {
+                "class": "person",
+                "confidence": 0.7704,
+                "bbox": [
+                    0.25,
+                    59.21,
+                    65.8,
+                    368.16
+                ]
+            },
+            {
+                "class": "person",
+                "confidence": 0.6482,
+                "bbox": [
+                    0.07,
+                    232.63,
+                    53.19,
+                    373.52
+                ]
+            }
+        ],
+        "yolo_image_path": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\yolo_detections\\000000000136_jpg_yolo.jpg",
+        "crop_info": {
+            "giraffe": {
+                "status": "FALLBACK",
+                "reason": "MULTIPLE_DISCONNECTED_REGIONS",
+                "matched_objects": 2,
+                "connected_components": 2,
+                "bbox": null
+            },
+            "person": {
+                "status": "SUCCESS",
+                "method": "MERGED",
+                "matched_objects": 2,
+                "connected_components": 1,
+                "bbox": [
+                    0,
+                    43,
+                    70,
+                    374
+                ]
+            }
+        },
+        "crop_paths": {
+            "person": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000136_jpg_person_crop.jpg"
+        },
+        "metrics": {
+            "llm_latency_ms": 696.32,
+            "yolo_latency_ms": 26.86,
+            "crop_latency_ms": 0.52,
+            "router_latency_ms": 0.2,
+            "vlm_latency_ms": 2141.09,
+            "total_latency_ms": 3013.77,
+            "payload_bytes": 40396
+        },
+        "status": "SUCCESS"
+    },
+    {
+        "image": "000000000138.jpg",
+        "question": "What is the person doing? If there is no person in the image, answer \"Nothing found\"",
+        "task_plan": {
+            "tasks": [
+                {
+                    "task_type": "attribute",
+                    "target": "Nothing found",
+                    "attribute": "person"
+                }
+            ]
+        },
+        "decisions": [
+            {
+                "route": "FULL_IMAGE",
+                "task_type": "ATTRIBUTE",
+                "target_class": null,
+                "target": "Nothing found",
+                "attribute": "person",
+                "semantic_type": "attribute"
+            }
+        ],
+        "task_results": [
+            {
+                "task_type": "ATTRIBUTE",
+                "semantic_type": "attribute",
+                "route": "FULL_IMAGE",
+                "requested_route": "FULL_IMAGE",
+                "target_class": null,
+                "answer": "1. The person is standing on a table with various items and objects around them. \n2. They are holding something that looks like a book or some sort of object. \n3. There's also a picture frame hanging on the wall behind them. \n4. The person appears to be looking at their surroundings, possibly searching for something specific.\n5. Their actions suggest they might be engaged in an activity related to reading or studying.",
+                "status": "SUCCESS"
+            }
+        ],
+        "answer": "1. The person is standing on a table with various items and objects around them. \n2. They are holding something that looks like a book or some sort of object. \n3. There's also a picture frame hanging on the wall behind them. \n4. The person appears to be looking at their surroundings, possibly searching for something specific.\n5. Their actions suggest they might be engaged in an activity related to reading or studying.",
+        "requested_route": "FULL_IMAGE",
+        "route": "FULL_IMAGE",
+        "task_type": "ATTRIBUTE",
+        "target_class": null,
+        "used_image": "FULL_IMAGE",
+        "used_crop_path": null,
+        "detections": [
+            {
+                "class": "refrigerator",
+                "confidence": 0.9022,
+                "bbox": [
+                    10.05,
+                    96.28,
+                    156.92,
+                    349.02
+                ]
+            },
+            {
+                "class": "oven",
+                "confidence": 0.7254,
+                "bbox": [
+                    258.85,
+                    169.05,
+                    380.64,
+                    343.13
+                ]
+            },
+            {
+                "class": "clock",
+                "confidence": 0.7064,
+                "bbox": [
+                    316.45,
+                    20.03,
+                    384.41,
+                    89.46
+                ]
+            },
+            {
+                "class": "vase",
+                "confidence": 0.6481,
+                "bbox": [
+                    219.91,
+                    54.92,
+                    250.77,
+                    103.2
+                ]
+            },
+            {
+                "class": "potted plant",
+                "confidence": 0.5545,
+                "bbox": [
+                    555.12,
+                    45.4,
+                    605.22,
+                    102.87
+                ]
+            },
+            {
+                "class": "bowl",
+                "confidence": 0.4415,
+                "bbox": [
+                    158.67,
+                    183.9,
+                    203.91,
+                    202.82
+                ]
+            },
+            {
+                "class": "vase",
+                "confidence": 0.2979,
+                "bbox": [
+                    430.81,
+                    62.58,
+                    449.96,
+                    102.7
+                ]
+            }
+        ],
+        "yolo_image_path": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\yolo_detections\\000000000138_jpg_yolo.jpg",
+        "crop_info": {
+            "refrigerator": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    2,
+                    83,
+                    165,
+                    362
+                ]
+            },
+            "oven": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    252,
+                    160,
+                    387,
+                    352
+                ]
+            },
+            "clock": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    313,
+                    16,
+                    388,
+                    93
+                ]
+            },
+            "vase": {
+                "status": "FALLBACK",
+                "reason": "MULTIPLE_DISCONNECTED_REGIONS",
+                "matched_objects": 2,
+                "connected_components": 2,
+                "bbox": null
+            },
+            "potted plant": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    552,
+                    42,
+                    608,
+                    106
+                ]
+            },
+            "bowl": {
+                "status": "SUCCESS",
+                "method": "SINGLE",
+                "matched_objects": 1,
+                "connected_components": 1,
+                "bbox": [
+                    156,
+                    182,
+                    207,
+                    204
+                ]
+            }
+        },
+        "crop_paths": {
+            "refrigerator": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000138_jpg_refrigerator_crop.jpg",
+            "oven": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000138_jpg_oven_crop.jpg",
+            "clock": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000138_jpg_clock_crop.jpg",
+            "potted plant": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000138_jpg_potted_plant_crop.jpg",
+            "bowl": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\outputs\\images_test_result\\crops\\000000000138_jpg_bowl_crop.jpg"
+        },
+        "metrics": {
+            "llm_latency_ms": 673.39,
+            "yolo_latency_ms": 25.68,
+            "crop_latency_ms": 2.17,
+            "router_latency_ms": 0.18,
+            "vlm_latency_ms": 2195.63,
+            "total_latency_ms": 3058.09,
+            "payload_bytes": 93733
         },
         "status": "SUCCESS"
     }

@@ -2,6 +2,7 @@
 import io
 import json
 import time
+import shutil
 
 from pathlib import Path
 from datetime import datetime
@@ -15,6 +16,7 @@ from toolbar.router import route_task
 from toolbar.crop import generate_crops
 from toolbar.detection_answer import answer_detection
 
+from models.Qwen.llm import LocalLLM
 from models.YOLO.detector import YOLODetector
 from models.SmolVLM.vlm import ask_vlm
 
@@ -26,6 +28,16 @@ from models.SmolVLM.vlm import ask_vlm
 logger = get_logger()
 
 detector = None
+llm = None
+
+
+def get_llm():
+    global llm
+
+    if llm is None:
+        llm = LocalLLM()
+
+    return llm
 
 
 def get_detector():
@@ -163,11 +175,12 @@ def run_pipeline(image_path, question):
     Pipeline:
 
         1. Load Image
-        2. YOLO Detection
-        3. Generate Crops
-        4. Task Router
-        5. Answer
-        6. Metrics
+        2. Qwen Semantic Classification
+        3. YOLO Detection
+        4. Generate Crops
+        5. Task Router
+        6. Answer
+        7. Metrics
     """
 
     image_path = Path(image_path).resolve()
@@ -185,7 +198,21 @@ def run_pipeline(image_path, question):
     )
 
     # --------------------------
-    # Step 2: YOLO Detection
+    # Step 2: Qwen Classification
+    # --------------------------
+
+    llm_start = time.perf_counter()
+
+    task_plan = get_llm().understand_task(
+        question
+    )
+
+    llm_latency = (
+        time.perf_counter() - llm_start
+    )
+
+    # --------------------------
+    # Step 3: YOLO Detection
     # --------------------------
 
     yolo_detector = get_detector()
@@ -209,7 +236,7 @@ def run_pipeline(image_path, question):
     )
 
     # --------------------------
-    # Step 3: Generate Crops
+    # Step 4: Generate Crops
     # --------------------------
 
     crop_start = time.perf_counter()
@@ -251,92 +278,215 @@ def run_pipeline(image_path, question):
             )
 
     # --------------------------
-    # Step 4: Task Router
+    # Step 5: Task Router
     # --------------------------
 
     router_start = time.perf_counter()
 
-    decision = route_task(
-        question,
-        detections
-    )
+    decisions = [
+        route_task(task, detections)
+        for task in task_plan["tasks"]
+    ]
 
     router_latency = (
         time.perf_counter() - router_start
     )
 
-    requested_route = decision["route"]
-    task_type = decision["task_type"]
-    target_class = decision["target_class"]
-
-    route = requested_route
-
     # --------------------------
-    # Step 5: Answer
+    # Step 6: Answer
     # --------------------------
 
-    answer = None
+    task_results = []
+
     vlm_latency = 0.0
     payload_bytes = 0
 
     used_image = "NONE"
     used_crop_path = None
 
-    if route == "DETECTIONS":
+    for decision in decisions:
 
-        answer = answer_detection(
-            decision,
-            detections
+        requested = decision["route"]
+        route = requested
+
+        target_class = decision["target_class"]
+        task_type = decision["task_type"]
+
+        task_status = "SUCCESS"
+        current_crop_path = None
+        current_used_image = "NONE"
+        current_payload = 0
+
+        if route == "DETECTIONS":
+
+            answer_part = answer_detection(
+                decision,
+                detections
+            )
+
+            current_payload = calculate_json_bytes(
+                detections
+            )
+
+        elif route in ("UNSUPPORTED", "CLOUD"):
+
+            if route == "CLOUD":
+                task_status = "NOT_IMPLEMENTED"
+                answer_part = (
+                    "Cloud processing is not "
+                    "implemented yet."
+                )
+
+            else:
+                task_status = "UNSUPPORTED_TARGET"
+                answer_part = (
+                    "The requested target is not "
+                    "supported by the YOLO model."
+                )
+
+        else:
+
+            target_image = image
+            current_used_image = "FULL_IMAGE"
+
+            if route == "CROP":
+
+                if (
+                    target_class is not None
+                    and target_class in crops
+                ):
+
+                    target_image = crops[target_class]
+                    current_used_image = "CROP"
+
+                    current_crop_path = crop_paths[
+                        target_class
+                    ]
+
+                else:
+
+                    logger.warning(
+                        "ROUTE FALLBACK | Image: %s | "
+                        "Target: %s | Using FULL_IMAGE",
+                        relative_path,
+                        target_class
+                    )
+
+                    route = "FULL_IMAGE"
+
+            current_payload = calculate_image_bytes(
+                target_image
+            )
+
+            # Build VLM question.
+            if len(decisions) == 1:
+
+                vlm_question = question
+
+            else:
+
+                vlm_question = (
+                    "Answer only this part of the "
+                    "user's question: "
+                    f"task={decision['semantic_type']}, "
+                    f"target={decision['target']}, "
+                    f"attribute={decision['attribute']}. "
+                    f"Original question: {question}"
+                )
+
+            # Provide YOLO context for complex tasks.
+            if decision["semantic_type"] == "complex":
+
+                counts = Counter(
+                    d["class"]
+                    for d in detections
+                )
+
+                summary = ", ".join(
+                    f"{name}: {count}"
+                    for name, count in counts.items()
+                ) or "No supported objects detected"
+
+                vlm_question += (
+                    "\nYOLO detections "
+                    "(may be incomplete): "
+                    + summary
+                )
+
+            answer_part, latency = ask_vlm(
+                target_image,
+                vlm_question
+            )
+
+            vlm_latency += latency
+
+        # --------------------------
+        # Validate Task Answer
+        # --------------------------
+
+        if not str(answer_part).strip():
+            raise ValueError(
+                "Model returned an empty answer"
+            )
+
+        payload_bytes += current_payload
+
+        if current_used_image != "NONE":
+            used_image = current_used_image
+
+        if current_crop_path is not None:
+            used_crop_path = current_crop_path
+
+        task_results.append({
+            "task_type": task_type,
+            "semantic_type": decision["semantic_type"],
+            "route": route,
+            "requested_route": requested,
+            "target_class": target_class,
+            "answer": answer_part,
+            "status": task_status
+        })
+
+    # --------------------------
+    # Combine Task Answers
+    # --------------------------
+
+    if len(task_results) == 1:
+
+        answer = task_results[0]["answer"]
+
+    else:
+
+        answer = "\n".join(
+            f"{i}. {item['answer']}"
+            for i, item in enumerate(
+                task_results,
+                start=1
+            )
         )
 
-        # Simulated YOLO JSON transmission
-        payload_bytes = calculate_json_bytes(
-            detections
+    if len(task_results) == 1:
+
+        requested_route = (
+            task_results[0]["requested_route"]
+        )
+
+        route = task_results[0]["route"]
+        task_type = task_results[0]["task_type"]
+
+        target_class = (
+            task_results[0]["target_class"]
         )
 
     else:
 
-        target_image = image
-        used_image = "FULL_IMAGE"
-
-        if route == "CROP":
-
-            if (
-                target_class is not None
-                and target_class in crops
-            ):
-
-                target_image = crops[target_class]
-                used_image = "CROP"
-
-                used_crop_path = crop_paths[
-                    target_class
-                ]
-
-            else:
-
-                logger.warning(
-                    "ROUTE FALLBACK | Image: %s | "
-                    "Target: %s | Using FULL_IMAGE",
-                    relative_path,
-                    target_class
-                )
-
-                route = "FULL_IMAGE"
-
-        # Simulated image transmission
-        payload_bytes = calculate_image_bytes(
-            target_image
-        )
-
-        # Local VLM inference
-        answer, vlm_latency = ask_vlm(
-            target_image,
-            question
-        )
+        requested_route = "MULTI_TASK"
+        route = "MULTI_TASK"
+        task_type = "MULTI_TASK"
+        target_class = None
 
     # --------------------------
-    # Step 6: Validate Answer
+    # Step 7: Validate Answer
     # --------------------------
 
     if not str(answer).strip():
@@ -345,7 +495,7 @@ def run_pipeline(image_path, question):
         )
 
     # --------------------------
-    # Step 7: Metrics
+    # Step 8: Metrics
     # --------------------------
 
     total_latency = (
@@ -353,6 +503,9 @@ def run_pipeline(image_path, question):
     )
 
     metrics = {
+        "llm_latency_ms": round(
+            llm_latency * 1000, 2
+        ),
         "yolo_latency_ms": round(
             yolo_latency * 1000, 2
         ),
@@ -372,12 +525,29 @@ def run_pipeline(image_path, question):
     }
 
     # --------------------------
-    # Step 8: Output
+    # Step 9: Output
     # --------------------------
+
+    statuses = [
+        task["status"]
+        for task in task_results
+    ]
+
+    if all(s == "SUCCESS" for s in statuses):
+        status = "SUCCESS"
+
+    elif any(s == "SUCCESS" for s in statuses):
+        status = "PARTIAL_SUCCESS"
+
+    else:
+        status = "UNSUPPORTED"
 
     return {
         "image": str(relative_path),
         "question": question,
+        "task_plan": task_plan,
+        "decisions": decisions,
+        "task_results": task_results,
         "answer": answer,
         "requested_route": requested_route,
         "route": route,
@@ -390,15 +560,69 @@ def run_pipeline(image_path, question):
         "crop_info": crop_info,
         "crop_paths": crop_paths,
         "metrics": metrics,
-        "status": "SUCCESS"
+        "status": status
     }
 
+# ==============================
+# Clear Previous Outputs
+# ==============================
+
+def clear_previous_outputs():
+
+    output_dir = config.PIPELINE_OUTPUT_DIR.resolve()
+
+    project_root = Path(__file__).resolve().parent
+
+    allowed_root = (
+        project_root / "outputs"
+    ).resolve()
+
+    # Safety check
+    if (
+        output_dir == allowed_root
+        or allowed_root not in output_dir.parents
+    ):
+        raise ValueError(
+            f"Unsafe output directory: {output_dir}"
+        )
+
+    if not output_dir.exists():
+        output_dir.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+        return
+
+    # Clear files and subdirectories,
+    # but keep active log files.
+    for item in output_dir.iterdir():
+
+        if item.is_file():
+
+            if item.suffix.lower() == ".log":
+                continue
+
+            item.unlink()
+
+        elif item.is_dir():
+
+            shutil.rmtree(item)
+
+    print(
+        f"Previous outputs cleared: {output_dir}"
+    )
 
 # ==============================
 # Batch Pipeline Test
 # ==============================
 
 def main():
+
+    # --------------------------
+    # Clear Previous Outputs
+    # --------------------------
+
+    clear_previous_outputs()
 
     # --------------------------
     # Step 1: Find Images
@@ -427,7 +651,12 @@ def main():
     # Step 2: Question
     # --------------------------
 
-    question = input("\nQuestion: ").strip()
+    try:
+        question = input("\nQuestion: ").strip()
+
+    except (KeyboardInterrupt, EOFError):
+        print("\nExiting pipeline.")
+        return
 
     if not question:
 

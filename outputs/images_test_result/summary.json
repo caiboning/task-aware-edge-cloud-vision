@@ -1,24 +1,25 @@
 {
-    "question": "How many zebras are in the picture? if there is no zebra, answer \"0\"",
-    "total_images": 2,
-    "successful_images": 2,
+    "question": "What is the person doing? If there is no person in the image, answer \"Nothing found\"",
+    "total_images": 6,
+    "successful_images": 6,
     "failed_images": 0,
     "success_rate_percent": 100.0,
     "route_counts": {
-        "DETECTIONS": 2
+        "FULL_IMAGE": 6
     },
     "task_counts": {
-        "COUNT": 2
+        "ATTRIBUTE": 6
     },
     "crop_counts": {
-        "SINGLE": 3
+        "SINGLE": 17,
+        "MERGED": 1
     },
-    "total_generated_crops": 3,
-    "crop_fallbacks": 0,
-    "average_latency_ms": 554.67,
-    "batch_latency_s": 1.111,
-    "total_payload_bytes": 248,
-    "average_payload_bytes": 124.0,
+    "total_generated_crops": 18,
+    "crop_fallbacks": 2,
+    "average_latency_ms": 3335.6,
+    "batch_latency_s": 20.018,
+    "total_payload_bytes": 488730,
+    "average_payload_bytes": 81455.0,
     "yolo_model": "E:\\Code\\202Project\\task-aware-edge-cloud-vision\\models\\YOLO\\yolo11n_ncnn_model",
     "vlm_model": "ahmadwaqar/smolvlm2-256m-video:q8_0",
     "crop_iou_threshold": 0.3
