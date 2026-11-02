@@ -8,17 +8,14 @@ The system supports multiple strategies, including local inference using lightwe
 Our goal is to reduce communication overhead and end-to-end latency while maintaining task accuracy. We evaluate different strategies based on task accuracy, transmitted bytes, and end-to-end latency.
 
 ## How to Use
-The planned application entry point is:
+Run the batch pipeline with:
 
 ```bash
 python pipeline.py
 ```
 
-Once the inference pipeline is implemented, users will be able to:
+The pipeline scans `data/images_test` (including subdirectories) and applies the entered question to each image. Qwen first classifies the request into semantic tasks. Object existence/counting/listing and object attributes use YOLO detections (and crops for attributes); scene, OCR, and complex visual questions use the local SmolVLM. Tasks classified as `cloud` use DeepSeek with the full image and question. If every task uses DeepSeek, YOLO is skipped; mixed questions run YOLO when another task needs detections or crop/context.
 
-1. Upload an image and enter a visual question.
-2. Select a processing strategy (local VLM, object detection results, cropped regions, or full-image transmission).
-3. View the model's response.
-4. Compare task accuracy, communication cost, and latency across strategies.
+The Qwen classifier requires `llama-cpp-python` and the `Qwen3-0.6B-Q4_0.gguf` weights at `models/Qwen/Qwen3-0.6B-Q4_0.gguf`; model weights are not stored in Git. To use the DeepSeek route, set `DEEPSEEK_API_KEY` in `models/DEEPSEEK/.env`. Optionally set `DEEPSEEK_MODEL` there (default: `deepseek-flash`) and `DEEPSEEK_MAX_TOKENS` (default: `4096`). Keep API keys private and do not commit the `.env` file.
 
-**Status:** Under development. Model integration and edge-cloud communication are not yet fully implemented.
+Qwen routes requests based on semantic intent rather than fixed English keywords. The `complex` task category remains on local SmolVLM; the separate `cloud` category uses DeepSeek.

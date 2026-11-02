@@ -169,7 +169,7 @@ def route_task(task, detections=None):
             task_type = "LIST"
 
         elif target_class is None:
-            route = "UNSUPPORTED"
+            route = "CLOUD_ANSWER"
             task_type = kind.upper()
 
         else:
@@ -199,15 +199,14 @@ def route_task(task, detections=None):
         route = "FULL_IMAGE"
         task_type = "COMPLEX"
 
-    elif kind == "cloud":
-
-        route = "CLOUD"
-        task_type = "CLOUD"
-
     else:
 
-        route = "UNSUPPORTED"
-        task_type = "UNKNOWN"
+        route = "CLOUD_ANSWER"
+        task_type = (
+            kind.upper()
+            if isinstance(kind, str)
+            else "UNKNOWN"
+        )
 
     return {
         "route": route,

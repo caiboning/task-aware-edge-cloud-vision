@@ -19,6 +19,7 @@ from toolbar.detection_answer import answer_detection
 from models.Qwen.llm import LocalLLM
 from models.YOLO.detector import YOLODetector
 from models.SmolVLM.vlm import ask_vlm
+from models.DEEPSEEK.deepseek import DEEPSEEK_MODEL, ask_deepseek
 
 
 # ==============================
@@ -176,11 +177,10 @@ def run_pipeline(image_path, question):
 
         1. Load Image
         2. Qwen Semantic Classification
-        3. YOLO Detection
-        4. Generate Crops
-        5. Task Router
-        6. Answer
-        7. Metrics
+        3. Task Router
+        4. YOLO Detection and Crops when needed
+        5. Answer with YOLO, SmolVLM, or DeepSeek
+        6. Metrics
     """
 
     image_path = Path(image_path).resolve()
@@ -212,85 +212,100 @@ def run_pipeline(image_path, question):
     )
 
     # --------------------------
-    # Step 3: YOLO Detection
-    # --------------------------
-
-    yolo_detector = get_detector()
-
-    detections, yolo_latency, raw_result = (
-        yolo_detector.detect(
-            image,
-            return_result=True
-        )
-    )
-
-    yolo_image_path = save_yolo_visualization(
-        raw_result,
-        relative_path
-    )
-
-    logger.info(
-        "YOLO DETECTION | Image: %s | Objects: %d",
-        relative_path,
-        len(detections)
-    )
-
-    # --------------------------
-    # Step 4: Generate Crops
-    # --------------------------
-
-    crop_start = time.perf_counter()
-
-    crops, crop_info = generate_crops(
-        image,
-        detections
-    )
-
-    crop_paths = save_crops(
-        crops,
-        relative_path
-    )
-
-    crop_latency = (
-        time.perf_counter() - crop_start
-    )
-
-    for class_name, info in crop_info.items():
-
-        if info["status"] == "SUCCESS":
-
-            logger.info(
-                "CROP SUCCESS | Image: %s | "
-                "Class: %s | Method: %s",
-                relative_path,
-                class_name,
-                info["method"]
-            )
-
-        else:
-
-            logger.warning(
-                "CROP FALLBACK | Image: %s | "
-                "Class: %s | Reason: %s",
-                relative_path,
-                class_name,
-                info["reason"]
-            )
-
-    # --------------------------
-    # Step 5: Task Router
+    # Step 3: Task Router
     # --------------------------
 
     router_start = time.perf_counter()
 
     decisions = [
-        route_task(task, detections)
+        route_task(task)
         for task in task_plan["tasks"]
     ]
 
     router_latency = (
         time.perf_counter() - router_start
     )
+
+    detections = []
+    yolo_latency = 0.0
+    yolo_image_path = None
+    crops = {}
+    crop_info = {}
+    crop_paths = {}
+    crop_latency = 0.0
+
+    needs_yolo = any(
+        decision["route"] in ("DETECTIONS", "CROP")
+        or decision["semantic_type"] == "complex"
+        for decision in decisions
+    )
+
+    if needs_yolo:
+        # --------------------------
+        # Step 4: YOLO Detection
+        # --------------------------
+
+        yolo_detector = get_detector()
+
+        detections, yolo_latency, raw_result = (
+            yolo_detector.detect(
+                image,
+                return_result=True
+            )
+        )
+
+        yolo_image_path = save_yolo_visualization(
+            raw_result,
+            relative_path
+        )
+
+        logger.info(
+            "YOLO DETECTION | Image: %s | Objects: %d",
+            relative_path,
+            len(detections)
+        )
+
+        # --------------------------
+        # Step 5: Generate Crops
+        # --------------------------
+
+        crop_start = time.perf_counter()
+
+        crops, crop_info = generate_crops(
+            image,
+            detections
+        )
+
+        crop_paths = save_crops(
+            crops,
+            relative_path
+        )
+
+        crop_latency = (
+            time.perf_counter() - crop_start
+        )
+
+        for class_name, info in crop_info.items():
+
+            if info["status"] == "SUCCESS":
+
+                logger.info(
+                    "CROP SUCCESS | Image: %s | "
+                    "Class: %s | Method: %s",
+                    relative_path,
+                    class_name,
+                    info["method"]
+                )
+
+            else:
+
+                logger.warning(
+                    "CROP FALLBACK | Image: %s | "
+                    "Class: %s | Reason: %s",
+                    relative_path,
+                    class_name,
+                    info["reason"]
+                )
 
     # --------------------------
     # Step 6: Answer
@@ -299,6 +314,7 @@ def run_pipeline(image_path, question):
     task_results = []
 
     vlm_latency = 0.0
+    cloud_latency = 0.0
     payload_bytes = 0
 
     used_image = "NONE"
@@ -328,21 +344,29 @@ def run_pipeline(image_path, question):
                 detections
             )
 
-        elif route in ("UNSUPPORTED", "CLOUD"):
+        elif route == "CLOUD_ANSWER":
 
-            if route == "CLOUD":
-                task_status = "NOT_IMPLEMENTED"
-                answer_part = (
-                    "Cloud processing is not "
-                    "implemented yet."
-                )
+            current_used_image = "FULL_IMAGE"
+            current_payload = calculate_image_bytes(image)
 
+            if len(decisions) == 1:
+                cloud_question = question
             else:
-                task_status = "UNSUPPORTED_TARGET"
-                answer_part = (
-                    "The requested target is not "
-                    "supported by the YOLO model."
+                cloud_question = (
+                    "Answer only this part of the "
+                    "user's question: "
+                    f"task={decision['semantic_type']}, "
+                    f"target={decision['target']}, "
+                    f"attribute={decision['attribute']}. "
+                    f"Original question: {question}"
                 )
+
+            answer_part, latency = ask_deepseek(
+                image,
+                cloud_question
+            )
+
+            cloud_latency += latency
 
         else:
 
@@ -518,6 +542,9 @@ def run_pipeline(image_path, question):
         "vlm_latency_ms": round(
             vlm_latency * 1000, 2
         ),
+        "cloud_latency_ms": round(
+            cloud_latency * 1000, 2
+        ),
         "total_latency_ms": round(
             total_latency * 1000, 2
         ),
@@ -540,7 +567,7 @@ def run_pipeline(image_path, question):
         status = "PARTIAL_SUCCESS"
 
     else:
-        status = "UNSUPPORTED"
+        status = "FAILED"
 
     return {
         "image": str(relative_path),
@@ -646,6 +673,7 @@ def main():
     print(f"\nFound {len(image_paths)} images.")
     print("YOLO Model:", config.YOLO_MODEL)
     print("VLM Model:", config.VLM_MODEL)
+    print("DeepSeek Model:", DEEPSEEK_MODEL)
 
     # --------------------------
     # Step 2: Question
@@ -896,6 +924,7 @@ def main():
         ),
         "yolo_model": str(config.YOLO_MODEL),
         "vlm_model": config.VLM_MODEL,
+        "deepseek_model": DEEPSEEK_MODEL,
         "crop_iou_threshold": config.CROP_IOU_THRESHOLD
     }
 

@@ -88,6 +88,10 @@ cloud:
 The request requires specialized knowledge,
 advanced reasoning, or capabilities beyond
 ordinary object detection and visual description.
+This includes predicting future events or outcomes,
+such as what could happen next, what someone may do
+next, or what might happen if the visible situation
+continues.
 
 IMPORTANT DISTINCTIONS:
 
@@ -98,6 +102,10 @@ IMPORTANT DISTINCTIONS:
 - Asking about colors is attribute.
 - Understanding what someone is doing is complex.
 - Understanding scene conditions is complex.
+- Describing visible actions or relationships is complex,
+  but predicting what may happen next is cloud.
+- Questions asking about future outcomes or hypothetical
+  consequences based on the image are cloud.
 - Do not classify ordinary visual questions as cloud.
 
 TARGET:
@@ -149,6 +157,14 @@ Use JSON null instead.
 
 /no_think
 """
+
+FUTURE_PREDICTION_PATTERNS = (
+    r"\bwhat\s+(?:could|might|may|will)\s+happen\s+next\b",
+    r"\bwhat\s+(?:could|might|may|will)\s+happen\s+if\b",
+    r"\bwhat\s+is\s+likely\s+to\s+happen\b",
+    r"\bwhat\s+(?:could|might|may|will)\s+(?:the\s+\w+\s+)?do\s+next\b",
+    r"\bpredict\b.*\b(?:future|next|outcome|happen)\b"
+)
 
 
 # ==============================
@@ -299,6 +315,20 @@ class LocalLLM:
         plan = self._normalize_plan(plan)
 
         self._validate_plan(plan)
+
+        if any(
+            re.search(pattern, question.lower())
+            for pattern in FUTURE_PREDICTION_PATTERNS
+        ):
+            return {
+                "tasks": [
+                    {
+                        "task_type": "cloud",
+                        "target": "future outcome",
+                        "attribute": "prediction"
+                    }
+                ]
+            }
 
         return plan
 
