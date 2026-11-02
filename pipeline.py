@@ -85,6 +85,87 @@ def calculate_json_bytes(data):
     )
 
 
+def write_text_report(results, summary):
+    """Write a readable batch report alongside the JSON outputs."""
+
+    lines = [
+        "Task-Aware Vision Pipeline Report",
+        "=" * 34,
+        f"Generated: {datetime.now().astimezone().isoformat(timespec='seconds')}",
+        f"Question: {summary['question']}",
+        "",
+        "Batch Summary",
+        "-" * 13,
+        f"Images: {summary['total_images']}",
+        f"Successful: {summary['successful_images']}",
+        f"Failed: {summary['failed_images']}",
+        f"Success rate: {summary['success_rate_percent']}%",
+        f"Routes: {json.dumps(summary['route_counts'], ensure_ascii=False)}",
+        f"Task types: {json.dumps(summary['task_counts'], ensure_ascii=False)}",
+        f"Average latency: {summary['average_latency_ms']} ms",
+        f"Total payload: {summary['total_payload_bytes']} bytes",
+        f"Average payload: {summary['average_payload_bytes']} bytes",
+        f"Generated crops: {summary['total_generated_crops']}",
+        f"Crop fallbacks: {summary['crop_fallbacks']}",
+        "",
+        "Models",
+        "-" * 6,
+        f"Qwen: {summary['qwen_model']}",
+        f"YOLO: {Path(summary['yolo_model']).name}",
+        f"SmolVLM: {summary['vlm_model']}",
+        f"DeepSeek: {summary['deepseek_model']}",
+        "",
+        "Per-Image Results",
+        "-" * 17,
+    ]
+
+    for index, result in enumerate(results, start=1):
+        lines.extend([
+            "",
+            f"[{index}/{len(results)}] {result['image']}",
+            f"Status: {result.get('status', 'UNKNOWN')}",
+        ])
+
+        if result.get("status") == "FAILED":
+            lines.extend([
+                f"Error: {result.get('error_type', 'Error')}",
+                f"Details: {result.get('error_message', 'No details')}",
+            ])
+            continue
+
+        metrics = result["metrics"]
+        lines.extend([
+            f"Task: {result['task_type']}",
+            f"Route: {result['route']}",
+            f"Target: {result.get('target_class') or 'N/A'}",
+            f"Answer: {result['answer']}",
+        ])
+
+        task_results = result.get("task_results", [])
+        if len(task_results) > 1:
+            lines.append("Task answers:")
+            for task_index, task in enumerate(task_results, start=1):
+                lines.append(
+                    f"  {task_index}. {task['task_type']} "
+                    f"({task['route']}): {task['answer']}"
+                )
+
+        lines.extend([
+            f"Latency: {metrics['total_latency_ms']} ms "
+            f"(Qwen {metrics.get('llm_latency_ms', 0)} ms, "
+            f"YOLO {metrics.get('yolo_latency_ms', 0)} ms, "
+            f"SmolVLM {metrics.get('vlm_latency_ms', 0)} ms, "
+            f"Cloud {metrics.get('cloud_latency_ms', 0)} ms)",
+            f"Payload: {metrics['payload_bytes']} bytes",
+        ])
+
+    config.PIPELINE_TEXT.parent.mkdir(parents=True, exist_ok=True)
+    config.PIPELINE_TEXT.write_text(
+        "\n".join(lines) + "\n",
+        encoding="utf-8"
+    )
+
+
 # ==============================
 # Save YOLO Visualization
 # ==============================
@@ -911,11 +992,17 @@ def main():
         "average_payload_bytes": round(
             average_payload_bytes, 2
         ),
+        "qwen_model": "Qwen3-0.6B",
         "yolo_model": str(config.YOLO_MODEL),
         "vlm_model": config.VLM_MODEL,
         "deepseek_model": DEEPSEEK_MODEL,
         "crop_iou_threshold": config.CROP_IOU_THRESHOLD
     }
+
+    write_text_report(
+        all_results,
+        summary
+    )
 
     # --------------------------
     # Step 8: Save Summary
@@ -957,6 +1044,7 @@ def main():
 
     print("\nResults saved to:")
     print(config.PIPELINE_OUTPUT_DIR)
+    print("Readable report:", config.PIPELINE_TEXT)
 
 
 if __name__ == "__main__":

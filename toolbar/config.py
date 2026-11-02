@@ -28,6 +28,7 @@ PIPELINE_YOLO_DIR = PIPELINE_OUTPUT_DIR / "yolo_detections"
 PIPELINE_RESULTS = PIPELINE_OUTPUT_DIR / "results.json"
 PIPELINE_SUMMARY = PIPELINE_OUTPUT_DIR / "summary.json"
 PIPELINE_ERRORS = PIPELINE_OUTPUT_DIR / "errors.json"
+PIPELINE_TEXT = PIPELINE_OUTPUT_DIR / "results.txt"
 PIPELINE_LOG = PIPELINE_OUTPUT_DIR / "pipeline.log"
 
 # ==============================
