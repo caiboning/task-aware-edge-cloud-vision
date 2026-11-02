@@ -236,7 +236,6 @@ def run_pipeline(image_path, question):
 
     needs_yolo = any(
         decision["route"] in ("DETECTIONS", "CROP")
-        or decision["semantic_type"] == "complex"
         for decision in decisions
     )
 
@@ -418,23 +417,13 @@ def run_pipeline(image_path, question):
                     f"Original question: {question}"
                 )
 
-            # Provide YOLO context for complex tasks.
-            if decision["semantic_type"] == "complex":
-
-                counts = Counter(
-                    d["class"]
-                    for d in detections
-                )
-
-                summary = ", ".join(
-                    f"{name}: {count}"
-                    for name, count in counts.items()
-                ) or "No supported objects detected"
-
-                vlm_question += (
-                    "\nYOLO detections "
-                    "(may be incomplete): "
-                    + summary
+            if decision["semantic_type"] == "ocr":
+                vlm_question = (
+                    "Transcribe only text that is clearly readable "
+                    "in the image. Do not describe the image or infer "
+                    "text that cannot be read. If there is no readable "
+                    "text, reply exactly: "
+                    "\"No readable text is visible in the image.\""
                 )
 
             answer_part, latency = ask_vlm(

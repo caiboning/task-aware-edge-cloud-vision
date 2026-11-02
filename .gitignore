@@ -11,6 +11,10 @@ models/YOLO/yolo11n_ncnn_model/
 # Local model caches
 .cache/
 __pycache__/
+*.py[cod]
+
+# Generated outputs and benchmark artifacts
+outputs/
 
 # Local credentials
 .env

@@ -140,6 +140,16 @@ def route_task(task, detections=None):
         )
 
     kind = task.get("task_type")
+    if kind not in (
+        "existence",
+        "counting",
+        "listing",
+        "attribute",
+        "ocr",
+        "complex"
+    ):
+        kind = "complex"
+
     target = task.get("target")
     attribute = task.get("attribute")
 
@@ -196,17 +206,13 @@ def route_task(task, detections=None):
 
     elif kind == "complex":
 
-        route = "FULL_IMAGE"
+        route = "CLOUD_ANSWER"
         task_type = "COMPLEX"
 
     else:
 
         route = "CLOUD_ANSWER"
-        task_type = (
-            kind.upper()
-            if isinstance(kind, str)
-            else "UNKNOWN"
-        )
+        task_type = "COMPLEX"
 
     return {
         "route": route,
