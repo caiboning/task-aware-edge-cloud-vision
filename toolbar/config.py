@@ -28,6 +28,7 @@ PIPELINE_YOLO_DIR = PIPELINE_OUTPUT_DIR / "yolo_detections"
 PIPELINE_RESULTS = PIPELINE_OUTPUT_DIR / "results.json"
 PIPELINE_SUMMARY = PIPELINE_OUTPUT_DIR / "summary.json"
 PIPELINE_ERRORS = PIPELINE_OUTPUT_DIR / "errors.json"
+PIPELINE_TEXT = PIPELINE_OUTPUT_DIR / "results.txt"
 PIPELINE_LOG = PIPELINE_OUTPUT_DIR / "pipeline.log"
 
 # ==============================
@@ -61,7 +62,7 @@ VLM_MODEL = "ahmadwaqar/smolvlm2-256m-video:q8_0"
 OLLAMA_HOST = "http://localhost:11434"
 
 VLM_TEMPERATURE = 0
-VLM_NUM_PREDICT = 128
+VLM_NUM_PREDICT = 256
 VLM_NUM_CTX = 2048
 VLM_REPEAT_PENALTY = 1.15
 

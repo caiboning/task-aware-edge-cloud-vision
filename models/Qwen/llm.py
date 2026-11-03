@@ -28,8 +28,7 @@ TASK_TYPES = [
     "listing",
     "attribute",
     "ocr",
-    "complex",
-    "cloud"
+    "complex"
 ]
 
 
@@ -51,7 +50,7 @@ Do not answer the question.
 Do not guess what is in the image.
 Do not invent detection results.
 
-Classify each request into one of seven types.
+Classify each request into one of six types.
 
 TASK TYPES:
 
@@ -70,24 +69,31 @@ object categories are present.
 attribute:
 The user asks about visible properties,
 including color, appearance, shape, clothing,
-or other visual characteristics.
+or other visual characteristics. This category
+is about what an object looks like, not what it
+is doing.
 
 ocr:
 The user wants to read, transcribe, or extract
 written text from the image.
 This includes words on signs, paper, screens,
-books, and notebooks.
+books, labels, and notebooks. Classify by intent:
+if the user asks what written words say or asks
+to read/transcribe them, use ocr even if the
+question names a sign or label as its target.
+Examples: "What does the sign say?",
+"What is written on this label?", and
+"Read the words on the screen."
 
 complex:
 The user asks about actions, activities,
 spatial relationships, scene conditions,
 weather visible in a scene, interactions,
-or visual reasoning involving context.
-
-cloud:
-The request requires specialized knowledge,
-advanced reasoning, or capabilities beyond
-ordinary object detection and visual description.
+visual reasoning involving context, or predictions
+about what could happen next. Use this category
+for any request that does not fit the other five
+categories. Complex tasks are sent to the cloud
+model for answering.
 
 IMPORTANT DISTINCTIONS:
 
@@ -95,10 +101,39 @@ IMPORTANT DISTINCTIONS:
 - Asking how many objects exist is counting.
 - Asking which objects exist is listing.
 - Reading written words is ocr, not listing.
+- Asking what a sign, label, page, or screen says
+  is ocr, not attribute.
 - Asking about colors is attribute.
-- Understanding what someone is doing is complex.
+- Asking what a person or animal is doing is
+  complex, not attribute.
 - Understanding scene conditions is complex.
-- Do not classify ordinary visual questions as cloud.
+- Predicting future events or hypothetical outcomes
+  is complex.
+- Classify requests by their meaning, not exact
+  wording or grammar.
+- If no other task type clearly applies, use complex.
+
+CLASSIFICATION EXAMPLES:
+
+Question: "What does the sign say?"
+Task type: ocr
+Target: image
+Attribute: text
+
+Question: "What color is the car?"
+Task type: attribute
+Target: car
+Attribute: color
+
+Question: "What is the person doing?"
+Task type: complex
+Target: person
+Attribute: action
+
+Question: "What could happen next?"
+Task type: complex
+Target: image
+Attribute: future outcome
 
 TARGET:
 
@@ -124,8 +159,8 @@ For existence, counting, and listing tasks,
 use JSON null unless a specific property
 is necessary.
 
-For cloud tasks, briefly describe the
-advanced capability requested.
+For complex tasks, briefly describe the
+requested reasoning or visual context.
 
 MULTIPLE REQUESTS:
 
@@ -360,9 +395,13 @@ class LocalLLM:
             task_type = task.get("task_type")
 
             if isinstance(task_type, str):
-                task["task_type"] = (
-                    task_type.strip().lower()
-                )
+                task_type = task_type.strip().lower()
+
+            task["task_type"] = (
+                task_type
+                if task_type in TASK_TYPES
+                else "complex"
+            )
 
             for field in ("target", "attribute"):
 

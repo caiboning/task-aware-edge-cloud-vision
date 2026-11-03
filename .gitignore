@@ -14,3 +14,12 @@ __pycache__/
 
 # Generated pipeline outputs
 outputs/images_test_result/
+*.py[cod]
+
+# Generated outputs and benchmark artifacts
+outputs/
+
+# Local credentials
+.env
+.env.*
+!.env.example
