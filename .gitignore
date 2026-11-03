@@ -11,3 +11,6 @@ models/YOLO/yolo11n_ncnn_model/
 # Local model caches
 .cache/
 __pycache__/
+
+# Generated pipeline outputs
+outputs/images_test_result/
