@@ -14,9 +14,17 @@ Run the batch pipeline with:
 python pipeline.py
 ```
 
+You can give the readable report a custom name from the terminal. Each run adds a timestamp and keeps earlier text reports:
+
+```bash
+python pipeline.py --report-name zebra_test
+```
+
+Reports are saved under `outputs/images_test_result/`. The JSON result files continue to represent the latest run.
+
 The pipeline scans `data/images_test` (including subdirectories) and applies the entered question to each image. Qwen classifies the request as existence, counting, listing, attribute, OCR, or complex. Object detection/listing and supported object counting use YOLO; attributes use YOLO crops with SmolVLM, while OCR uses SmolVLM with the full image. Complex questions, future predictions, unsupported targets, and requests that do not fit another category go to DeepSeek. YOLO is skipped when none of the tasks needs detections or crops.
 
-Each run saves machine-readable results (`results.json`, `summary.json`, and `errors.json`) and a readable report at `outputs/images_test_result/results.txt`.
+Each run saves machine-readable results (`results.json`, `summary.json`, and `errors.json`) and a uniquely named readable report in `outputs/images_test_result/`. The JSON files are overwritten with the latest run; previous text reports are kept.
 
 The Qwen classifier requires `llama-cpp-python` and the `Qwen3-0.6B-Q4_0.gguf` weights at `models/Qwen/Qwen3-0.6B-Q4_0.gguf`; model weights are not stored in Git. To use the DeepSeek route, set `DEEPSEEK_API_KEY` in `models/DEEPSEEK/.env`. Optionally set `DEEPSEEK_MODEL` there (default: `deepseek-flash`) and `DEEPSEEK_MAX_TOKENS` (default: `4096`). Keep API keys private and do not commit the `.env` file.
 

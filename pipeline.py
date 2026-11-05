@@ -1,8 +1,8 @@
 
+import argparse
 import io
 import json
 import time
-import shutil
 
 from pathlib import Path
 from datetime import datetime
@@ -85,7 +85,38 @@ def calculate_json_bytes(data):
     )
 
 
-def write_text_report(results, summary):
+def get_report_path(report_name):
+    """Create a unique report path for this pipeline run."""
+
+    report_name = Path(report_name)
+    if (
+        report_name.name != str(report_name)
+        or report_name.stem in {"", ".", ".."}
+    ):
+        raise ValueError(
+            "Report name must be a filename or filename stem, "
+            "not a path."
+        )
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    report_stem = report_name.stem
+    report_path = (
+        config.PIPELINE_TEXT.parent
+        / f"{report_stem}_{timestamp}.txt"
+    )
+
+    suffix = 1
+    while report_path.exists():
+        report_path = (
+            config.PIPELINE_TEXT.parent
+            / f"{report_stem}_{timestamp}_{suffix}.txt"
+        )
+        suffix += 1
+
+    return report_path
+
+
+def write_text_report(results, summary, report_path):
     """Write a readable batch report alongside the JSON outputs."""
 
     lines = [
@@ -159,8 +190,8 @@ def write_text_report(results, summary):
             f"Payload: {metrics['payload_bytes']} bytes",
         ])
 
-    config.PIPELINE_TEXT.parent.mkdir(parents=True, exist_ok=True)
-    config.PIPELINE_TEXT.write_text(
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(
         "\n".join(lines) + "\n",
         encoding="utf-8"
     )
@@ -661,65 +692,28 @@ def run_pipeline(image_path, question):
     }
 
 # ==============================
-# Clear Previous Outputs
-# ==============================
-
-def clear_previous_outputs():
-
-    output_dir = config.PIPELINE_OUTPUT_DIR.resolve()
-
-    project_root = Path(__file__).resolve().parent
-
-    allowed_root = (
-        project_root / "outputs"
-    ).resolve()
-
-    # Safety check
-    if (
-        output_dir == allowed_root
-        or allowed_root not in output_dir.parents
-    ):
-        raise ValueError(
-            f"Unsafe output directory: {output_dir}"
-        )
-
-    if not output_dir.exists():
-        output_dir.mkdir(
-            parents=True,
-            exist_ok=True
-        )
-        return
-
-    # Clear files and subdirectories,
-    # but keep active log files.
-    for item in output_dir.iterdir():
-
-        if item.is_file():
-
-            if item.suffix.lower() == ".log":
-                continue
-
-            item.unlink()
-
-        elif item.is_dir():
-
-            shutil.rmtree(item)
-
-    print(
-        f"Previous outputs cleared: {output_dir}"
-    )
-
-# ==============================
 # Batch Pipeline Test
 # ==============================
 
-def main():
+def main(argv=None):
 
     # --------------------------
-    # Clear Previous Outputs
+    # Command-Line Options
     # --------------------------
 
-    clear_previous_outputs()
+    parser = argparse.ArgumentParser(
+        description="Run the task-aware vision pipeline."
+    )
+    parser.add_argument(
+        "--report-name",
+        default="results",
+        help=(
+            "Custom report filename or stem. A timestamp is added "
+            "to preserve reports from previous runs."
+        )
+    )
+    args = parser.parse_args(argv)
+    report_path = get_report_path(args.report_name)
 
     # --------------------------
     # Step 1: Find Images
@@ -1001,7 +995,8 @@ def main():
 
     write_text_report(
         all_results,
-        summary
+        summary,
+        report_path
     )
 
     # --------------------------
@@ -1044,7 +1039,7 @@ def main():
 
     print("\nResults saved to:")
     print(config.PIPELINE_OUTPUT_DIR)
-    print("Readable report:", config.PIPELINE_TEXT)
+    print("Readable report:", report_path)
 
 
 if __name__ == "__main__":
