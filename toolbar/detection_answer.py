@@ -103,3 +103,25 @@ def answer_detection(decision, detections):
     raise ValueError(
         f"Unsupported detection task: {task_type}"
     )
+
+
+def answer_missing_attribute(decision, detections):
+    """Explain that an attribute cannot be answered when YOLO found no target."""
+
+    target_class = decision.get("target_class")
+    if target_class is None:
+        raise ValueError(
+            "Attribute fallback requires target_class"
+        )
+
+    if any(
+        detection["class"].lower() == target_class
+        for detection in detections
+    ):
+        return None
+
+    attribute = decision.get("attribute") or "requested attribute"
+    return (
+        f"YOLO did not detect any {target_class}, "
+        f"so its {attribute} cannot be determined."
+    )

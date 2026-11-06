@@ -111,7 +111,7 @@ def find_target_class(question, detections=None):
 # Semantic Task Router
 # ==============================
 
-def route_task(task, detections=None):
+def route_task(task, detections=None, question=None):
     """
     Map one Qwen task to the existing
     pipeline route names.
@@ -157,11 +157,18 @@ def route_task(task, detections=None):
         str(target or "")
     )
 
+    if target_class is None and question and kind in (
+        "existence",
+        "counting"
+    ):
+        target_class = find_target_class(question)
+
     if kind in ("existence", "counting", "listing"):
 
+        normalized_target = normalize_question(str(target or ""))
         general = (
             target is None
-            or str(target).lower().strip() in {
+            or normalized_target in {
                 "image",
                 "picture",
                 "scene",
@@ -172,6 +179,16 @@ def route_task(task, detections=None):
                 "all objects",
                 "everything"
             }
+            or (
+                kind == "listing"
+                and re.fullmatch(
+                    r"(?:(?:all|the)\s+)?"
+                    r"(?:objects?|items?|things?)"
+                    r"(?:\s+in\s+(?:(?:the|this)\s+)?"
+                    r"(?:image|picture|photo|scene))?",
+                    normalized_target
+                ) is not None
+            )
         )
 
         if kind == "listing" and general:

@@ -2,6 +2,7 @@
 import argparse
 import io
 import json
+import re
 import time
 
 from pathlib import Path
@@ -14,7 +15,10 @@ from toolbar import config
 from toolbar.logger import get_logger
 from toolbar.router import route_task
 from toolbar.crop import generate_crops
-from toolbar.detection_answer import answer_detection
+from toolbar.detection_answer import (
+    answer_detection,
+    answer_missing_attribute
+)
 
 from models.Qwen.llm import LocalLLM
 from models.YOLO.detector import YOLODetector
@@ -116,6 +120,31 @@ def get_report_path(report_name):
     return report_path
 
 
+def route_models(requested_route, route):
+    """Return the answering/inference models used for a task route."""
+
+    if requested_route == "CROP" and route == "CROP":
+        return ["YOLO", "SmolVLM"]
+    if route == "DETECTIONS":
+        return ["YOLO"]
+    if route == "CLOUD_ANSWER":
+        return ["Cloud (DeepSeek)"]
+    if route == "FULL_IMAGE":
+        return ["SmolVLM"]
+    return []
+
+
+def format_route(route, models, requested_route=None):
+    """Format a route with its model names and any fallback information."""
+
+    formatted = route
+    if models:
+        formatted += f" -> {' + '.join(models)}"
+    if requested_route and requested_route != route:
+        formatted += f" [fallback from {requested_route}]"
+    return formatted
+
+
 def write_text_report(results, summary, report_path):
     """Write a readable batch report alongside the JSON outputs."""
 
@@ -167,7 +196,7 @@ def write_text_report(results, summary, report_path):
         metrics = result["metrics"]
         lines.extend([
             f"Task: {result['task_type']}",
-            f"Route: {result['route']}",
+            f"Route: {format_route(result['route'], result.get('models', []), result.get('requested_route'))}",
             f"Target: {result.get('target_class') or 'N/A'}",
             f"Answer: {result['answer']}",
         ])
@@ -178,7 +207,8 @@ def write_text_report(results, summary, report_path):
             for task_index, task in enumerate(task_results, start=1):
                 lines.append(
                     f"  {task_index}. {task['task_type']} "
-                    f"({task['route']}): {task['answer']}"
+                    f"({format_route(task['route'], task.get('models', []), task.get('requested_route'))}): "
+                    f"{task['answer']}"
                 )
 
         lines.extend([
@@ -330,7 +360,7 @@ def run_pipeline(image_path, question):
     router_start = time.perf_counter()
 
     decisions = [
-        route_task(task)
+        route_task(task, question=question)
         for task in task_plan["tasks"]
     ]
 
@@ -455,6 +485,20 @@ def run_pipeline(image_path, question):
                 detections
             )
 
+        elif route == "CROP" and target_class is not None and not any(
+            detection["class"].lower() == target_class
+            for detection in detections
+        ):
+
+            answer_part = answer_missing_attribute(
+                decision,
+                detections
+            )
+            route = "DETECTIONS"
+            current_payload = calculate_json_bytes(
+                detections
+            )
+
         elif route == "CLOUD_ANSWER":
 
             current_used_image = "FULL_IMAGE"
@@ -537,6 +581,21 @@ def run_pipeline(image_path, question):
                     "text, reply exactly: "
                     "\"No readable text is visible in the image.\""
                 )
+            elif (
+                decision["semantic_type"] == "attribute"
+                and (
+                    str(decision.get("attribute") or "").lower()
+                    in {"color", "colour"}
+                    or re.search(r"\bcolou?rs?\b", question, re.IGNORECASE)
+                )
+            ):
+                target_name = target_class or decision.get("target") or "object"
+                vlm_question = (
+                    f"Look carefully at the {target_name} in the image. "
+                    "Identify only its visible color, not the background or lighting. "
+                    "Give a short answer with the main color. Do not guess; if the "
+                    "object or its color is unclear, say that it is unclear."
+                )
 
             answer_part, latency = ask_vlm(
                 target_image,
@@ -554,6 +613,7 @@ def run_pipeline(image_path, question):
                 "Model returned an empty answer"
             )
 
+        used_models = route_models(requested, route)
         payload_bytes += current_payload
 
         if current_used_image != "NONE":
@@ -567,6 +627,7 @@ def run_pipeline(image_path, question):
             "semantic_type": decision["semantic_type"],
             "route": route,
             "requested_route": requested,
+            "models": used_models,
             "target_class": target_class,
             "answer": answer_part,
             "status": task_status
@@ -609,6 +670,12 @@ def run_pipeline(image_path, question):
         route = "MULTI_TASK"
         task_type = "MULTI_TASK"
         target_class = None
+
+    models = list(dict.fromkeys(
+        model
+        for task in task_results
+        for model in task["models"]
+    ))
 
     # --------------------------
     # Step 7: Validate Answer
@@ -679,6 +746,7 @@ def run_pipeline(image_path, question):
         "answer": answer,
         "requested_route": requested_route,
         "route": route,
+        "models": models,
         "task_type": task_type,
         "target_class": target_class,
         "used_image": used_image,
@@ -814,13 +882,24 @@ def main(argv=None):
                 "Latency: %.2f ms",
                 image_name,
                 result["task_type"],
-                result["route"],
+                format_route(
+                    result["route"],
+                    result["models"],
+                    result["requested_route"]
+                ),
                 result["metrics"]["total_latency_ms"]
             )
 
             print("Answer:", result["answer"])
             print("Task Type:", result["task_type"])
-            print("Route:", result["route"])
+            print(
+                "Route:",
+                format_route(
+                    result["route"],
+                    result["models"],
+                    result["requested_route"]
+                )
+            )
             print("Used Image:", result["used_image"])
             print("Target Class:", result["target_class"])
             print(

@@ -26,6 +26,8 @@ The pipeline scans `data/images_test` (including subdirectories) and applies the
 
 Each run saves machine-readable results (`results.json`, `summary.json`, and `errors.json`) and a uniquely named readable report in `outputs/images_test_result/`. The JSON files are overwritten with the latest run; previous text reports are kept.
 
+Per-image reports show the model(s) used for each route: `DETECTIONS` uses YOLO, `CROP` uses YOLO and SmolVLM, `FULL_IMAGE` uses SmolVLM, and `CLOUD_ANSWER` uses Cloud (DeepSeek). If YOLO finds no target for an attribute question, the pipeline reports that the attribute cannot be determined instead of asking the VLM to guess. Color questions use a focused prompt on the detected crop. If a crop route falls back to full-image processing, the report identifies the fallback while listing both models used.
+
 The Qwen classifier requires `llama-cpp-python` and the `Qwen3-0.6B-Q4_0.gguf` weights at `models/Qwen/Qwen3-0.6B-Q4_0.gguf`; model weights are not stored in Git. To use the DeepSeek route, set `DEEPSEEK_API_KEY` in `models/DEEPSEEK/.env`. Optionally set `DEEPSEEK_MODEL` there (default: `deepseek-flash`) and `DEEPSEEK_MAX_TOKENS` (default: `4096`). Keep API keys private and do not commit the `.env` file.
 
 Qwen routes requests based on semantic intent rather than fixed English keywords. There is no separate `cloud` task category: `complex` is the catch-all category and uses DeepSeek.
