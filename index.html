@@ -266,6 +266,12 @@
     tbody tr:last-child td { border-bottom: 0; }
     .model-tag { color: var(--green-dark); font-weight: 750; }
 
+    .routing-table { min-width: 760px; }
+    .routing-table th, .routing-table td { white-space: normal; vertical-align: top; }
+    .routing-table td:first-child { font-weight: 750; }
+    .routing-table td:nth-child(2) { min-width: 250px; }
+    .routing-table td:nth-child(3) { min-width: 220px; }
+
     .note {
       margin: 14px 0 0;
       color: var(--muted);
@@ -344,7 +350,9 @@
         <span>Task-Aware Visual QA</span>
       </a>
       <nav aria-label="Main navigation">
+        <a href="#motivation">Motivation</a>
         <a href="#approach">Approach</a>
+        <a href="#task-routes">Task routes</a>
         <a href="#results">Results</a>
         <a href="#status">Status</a>
       </nav>
@@ -367,26 +375,26 @@
     </section>
 
     <main>
-      <section aria-labelledby="goal-title">
+      <section id="motivation" aria-labelledby="goal-title">
         <div class="section-heading">
-          <h2 id="goal-title">Why task-aware routing?</h2>
-          <p>Sending every image to a cloud model can add network payload and latency, even when a lightweight local model can answer the question.</p>
+          <h2 id="goal-title">Motivation</h2>
+          <p>For image-based visual QA on Raspberry Pi-class edge devices, sending every full image to the cloud can consume bandwidth and add latency.</p>
         </div>
         <div class="grid-3">
           <article class="card feature">
             <div class="icon" aria-hidden="true">01</div>
-            <h3>Understand the request</h3>
-            <p>Qwen classifies the question by intent: count, list, attribute, OCR, or complex reasoning.</p>
+            <h3>Input</h3>
+            <p>A recorded image and a natural-language question; current tests use image replay, not live camera input.</p>
           </article>
           <article class="card feature">
             <div class="icon" aria-hidden="true">02</div>
-            <h3>Choose a route</h3>
-            <p>The router selects object detections, local visual understanding, or cloud inference as appropriate.</p>
+            <h3>Design goal</h3>
+            <p>Choose the lightest suitable route while still producing a useful answer.</p>
           </article>
           <article class="card feature">
             <div class="icon" aria-hidden="true">03</div>
-            <h3>Measure the trade-offs</h3>
-            <p>We track answer quality, transferred payload, and end-to-end latency for edge-oriented use.</p>
+            <h3>Constraint</h3>
+            <p>Balance edge compute, network payload, response time, and answer quality.</p>
           </article>
         </div>
       </section>
@@ -413,6 +421,72 @@
             <div class="route"><strong>DeepSeek · cloud</strong><span>Complex questions or unsupported object categories.</span></div>
           </div>
         </div>
+      </section>
+
+      <section id="task-routes" aria-labelledby="task-routes-title">
+        <div class="section-heading">
+          <h2 id="task-routes-title">Question-to-route examples</h2>
+          <p>The input image is available to the pipeline. Local routes process it on-device; only the cloud route sends the full image to DeepSeek.</p>
+        </div>
+        <div class="card results-card">
+          <div class="table-scroll">
+            <table class="routing-table">
+              <thead>
+                <tr>
+                  <th scope="col">Category</th>
+                  <th scope="col">Example question</th>
+                  <th scope="col">Image used by route</th>
+                  <th scope="col">Route</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Existence</td>
+                  <td>Is there a zebra in the image?</td>
+                  <td>Full image, processed locally</td>
+                  <td class="model-tag">YOLO detects the object</td>
+                </tr>
+                <tr>
+                  <td>Counting</td>
+                  <td>How many people are in the image?</td>
+                  <td>Full image, processed locally</td>
+                  <td class="model-tag">YOLO detects and counts objects</td>
+                </tr>
+                <tr>
+                  <td>Listing</td>
+                  <td>What objects are in the image?</td>
+                  <td>Full image, processed locally</td>
+                  <td class="model-tag">YOLO lists detected objects</td>
+                </tr>
+                <tr>
+                  <td>Attribute</td>
+                  <td>What color is the bus?</td>
+                  <td>Full image for YOLO; detected bus crop for SmolVLM</td>
+                  <td class="model-tag">YOLO → SmolVLM; if no bus is detected, report that</td>
+                </tr>
+                <tr>
+                  <td>Attribute</td>
+                  <td>Describe the image.</td>
+                  <td>Full image, processed locally</td>
+                  <td class="model-tag">SmolVLM</td>
+                </tr>
+                <tr>
+                  <td>OCR</td>
+                  <td>What does the sign say?</td>
+                  <td>Full image, processed locally</td>
+                  <td class="model-tag">SmolVLM</td>
+                </tr>
+                <tr>
+                  <td>Complex</td>
+                  <td>What will happen next in the image?</td>
+                  <td>Full image sent to cloud</td>
+                  <td class="model-tag">Cloud (DeepSeek)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="note">“Full image” for local YOLO/SmolVLM means model input, not an image upload to the cloud. Detection routes report compact detection data rather than transmitting the full image.</p>
       </section>
 
       <section id="results" aria-labelledby="results-title">
