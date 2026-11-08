@@ -17,7 +17,7 @@ from toolbar.router import route_task
 from toolbar.crop import generate_crops
 from toolbar.detection_answer import (
     answer_detection,
-    answer_missing_attribute
+    answer_missing_target
 )
 
 from models.Qwen.llm import LocalLLM
@@ -490,7 +490,7 @@ def run_pipeline(image_path, question):
             for detection in detections
         ):
 
-            answer_part = answer_missing_attribute(
+            answer_part = answer_missing_target(
                 decision,
                 detections
             )
@@ -574,13 +574,22 @@ def run_pipeline(image_path, question):
                 )
 
             if decision["semantic_type"] == "ocr":
-                vlm_question = (
-                    "Transcribe only text that is clearly readable "
-                    "in the image. Do not describe the image or infer "
-                    "text that cannot be read. If there is no readable "
-                    "text, reply exactly: "
-                    "\"No readable text is visible in the image.\""
-                )
+                if route == "CROP" and target_class:
+                    vlm_question = (
+                        f"Read only clearly visible text on the {target_class} "
+                        "in this cropped image. Ignore text outside the target. "
+                        "Do not describe the image or infer unreadable text. "
+                        "If no text on the target is readable, reply exactly: "
+                        "\"No readable text is visible on the target.\""
+                    )
+                else:
+                    vlm_question = (
+                        "Transcribe only text that is clearly readable "
+                        "in the image. Do not describe the image or infer "
+                        "text that cannot be read. If there is no readable "
+                        "text, reply exactly: "
+                        "\"No readable text is visible in the image.\""
+                    )
             elif (
                 decision["semantic_type"] == "attribute"
                 and (
@@ -591,10 +600,13 @@ def run_pipeline(image_path, question):
             ):
                 target_name = target_class or decision.get("target") or "object"
                 vlm_question = (
-                    f"Look carefully at the {target_name} in the image. "
-                    "Identify only its visible color, not the background or lighting. "
-                    "Give a short answer with the main color. Do not guess; if the "
-                    "object or its color is unclear, say that it is unclear."
+                    f"Look at the {target_name} crop and answer this color question. "
+                    "Report the main color of the object's own material or surface. "
+                    "Ignore any text, route numbers, signs, logos, labels, windows, "
+                    "lights, reflections, and the background; do not read or repeat "
+                    "text from the image. Reply with only a short color description, "
+                    "for example, 'white with teal accents'. If the object's surface "
+                    "color cannot be determined, reply 'unclear'."
                 )
 
             answer_part, latency = ask_vlm(

@@ -48,7 +48,8 @@ CLASS_ALIASES = {
     "bottle": ["bottles"],
     "laptop": ["laptops"],
     "cell phone": ["phone", "phones", "mobile phone"],
-    "tv": ["television", "televisions"]
+    "tv": ["television", "televisions"],
+    "refrigerator": ["fridge", "fridges"]
 }
 
 
@@ -159,7 +160,8 @@ def route_task(task, detections=None, question=None):
 
     if target_class is None and question and kind in (
         "existence",
-        "counting"
+        "counting",
+        "ocr"
     ):
         target_class = find_target_class(question)
 
@@ -218,7 +220,7 @@ def route_task(task, detections=None, question=None):
 
     elif kind == "ocr":
 
-        route = "FULL_IMAGE"
+        route = "CROP" if target_class else "FULL_IMAGE"
         task_type = "TEXT"
 
     elif kind == "complex":

@@ -105,13 +105,13 @@ def answer_detection(decision, detections):
     )
 
 
-def answer_missing_attribute(decision, detections):
-    """Explain that an attribute cannot be answered when YOLO found no target."""
+def answer_missing_target(decision, detections):
+    """Explain that a task cannot be answered when YOLO found no target."""
 
     target_class = decision.get("target_class")
     if target_class is None:
         raise ValueError(
-            "Attribute fallback requires target_class"
+            "Missing-target response requires target_class"
         )
 
     if any(
@@ -119,6 +119,12 @@ def answer_missing_attribute(decision, detections):
         for detection in detections
     ):
         return None
+
+    if decision.get("semantic_type") == "ocr":
+        return (
+            f"YOLO did not detect any {target_class}, "
+            "so its text cannot be read."
+        )
 
     attribute = decision.get("attribute") or "requested attribute"
     return (

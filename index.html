@@ -417,7 +417,7 @@
           <div class="routes">
             <div class="route"><strong>YOLO · local</strong><span>Supported object existence, counting, and listing.</span></div>
             <div class="route"><strong>YOLO crop → SmolVLM · local</strong><span>Attributes of detected objects, such as appearance or color.</span></div>
-            <div class="route"><strong>SmolVLM · local</strong><span>OCR and visual questions requiring the full image.</span></div>
+            <div class="route"><strong>OCR · local</strong><span>For supported targets, YOLO finds the object and SmolVLM reads text on its crop; if absent, YOLO reports that.</span></div>
             <div class="route"><strong>DeepSeek · cloud</strong><span>Complex questions or unsupported object categories.</span></div>
           </div>
         </div>
@@ -467,8 +467,8 @@
                 <tr>
                   <td>Attribute</td>
                   <td>Describe the image.</td>
-                  <td>Full image, processed locally</td>
-                  <td class="model-tag">SmolVLM</td>
+                  <td>Full image for YOLO; target crop when supported and detected</td>
+                  <td class="model-tag">YOLO → SmolVLM; if target is absent, YOLO reports that</td>
                 </tr>
                 <tr>
                   <td>OCR</td>
