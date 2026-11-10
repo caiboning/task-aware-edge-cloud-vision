@@ -486,7 +486,7 @@
             </table>
           </div>
         </div>
-        <p class="note">“Full image” for local YOLO/SmolVLM means model input, not an image upload to the cloud. Detection routes report compact detection data rather than transmitting the full image.</p>
+        <p class="note">Local Qwen, YOLO, and SmolVLM processing does not upload data to the cloud, so its edge-to-cloud payload is 0 B. Only cloud routes upload a request containing the image and prompt.</p>
       </section>
 
       <section id="results" aria-labelledby="results-title">
@@ -501,22 +501,22 @@
                 <tr>
                   <th scope="col">Task</th>
                   <th scope="col">Route</th>
-                  <th scope="col">Avg. payload</th>
+                  <th scope="col">Edge → Cloud payload</th>
                   <th scope="col">Latency · PC</th>
                   <th scope="col">Latency · Pi</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>Zebra existence</td><td class="model-tag">YOLO</td><td>~298 B</td><td>1.27 s</td><td>1.94 s</td></tr>
-                <tr><td>People counting</td><td class="model-tag">YOLO</td><td>~298 B</td><td>1.09 s</td><td>1.93 s</td></tr>
-                <tr><td>Object listing</td><td class="model-tag">YOLO</td><td>~298 B</td><td>1.16 s</td><td>1.77 s</td></tr>
-                <tr><td>Image description</td><td class="model-tag">SmolVLM</td><td>~81.5 KB</td><td>3.76 s</td><td>45.9 s</td></tr>
-                <tr><td>Future prediction</td><td class="model-tag">Cloud · DeepSeek</td><td>~81.5 KB</td><td>4.92 s</td><td>19.8 s</td></tr>
+                <tr><td>Zebra existence</td><td class="model-tag">YOLO · local</td><td>0 B</td><td>1.27 s</td><td>1.94 s</td></tr>
+                <tr><td>People counting</td><td class="model-tag">YOLO · local</td><td>0 B</td><td>1.09 s</td><td>1.93 s</td></tr>
+                <tr><td>Object listing</td><td class="model-tag">YOLO · local</td><td>0 B</td><td>1.16 s</td><td>1.77 s</td></tr>
+                <tr><td>Image description</td><td class="model-tag">SmolVLM · local</td><td>0 B</td><td>3.76 s</td><td>45.9 s</td></tr>
+                <tr><td>Future prediction</td><td class="model-tag">Cloud · DeepSeek</td><td>~109 KB estimated request body</td><td>4.92 s</td><td>19.8 s</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-        <p class="note">Preliminary, task-specific runs; sample counts varied (6–7 images). These measurements are not a controlled accuracy comparison. YOLO used the least payload; SmolVLM was faster on PC, but slower than DeepSeek on Raspberry Pi.</p>
+        <p class="note">Preliminary, task-specific runs; sample counts varied (6–7 images). Local routes have 0 B edge-to-cloud payload. The cloud figure is an estimated JSON request-body average from a 7-image run; it excludes HTTP headers, TLS overhead, and response traffic. Payload and latency figures come from separate runs and are not a controlled accuracy comparison. SmolVLM was faster on PC, but slower than DeepSeek on Raspberry Pi.</p>
       </section>
 
       <section id="status" aria-labelledby="status-title">

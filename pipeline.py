@@ -1,6 +1,5 @@
 
 import argparse
-import io
 import json
 import re
 import time
@@ -62,33 +61,6 @@ def get_detector():
     return detector
 
 
-# ==============================
-# Payload Utilities
-# ==============================
-
-def calculate_image_bytes(image):
-
-    buffer = io.BytesIO()
-
-    image.convert("RGB").save(
-        buffer,
-        format="JPEG",
-        quality=config.IMAGE_QUALITY
-    )
-
-    return len(buffer.getvalue())
-
-
-def calculate_json_bytes(data):
-
-    return len(
-        json.dumps(
-            data,
-            ensure_ascii=False
-        ).encode("utf-8")
-    )
-
-
 def get_report_path(report_name):
     """Create a unique report path for this pipeline run."""
 
@@ -132,8 +104,6 @@ def route_models(requested_route, route):
     if route == "FULL_IMAGE":
         return ["SmolVLM"]
     return []
-
-
 def format_route(route, models, requested_route=None):
     """Format a route with its model names and any fallback information."""
 
@@ -163,8 +133,12 @@ def write_text_report(results, summary, report_path):
         f"Routes: {json.dumps(summary['route_counts'], ensure_ascii=False)}",
         f"Task types: {json.dumps(summary['task_counts'], ensure_ascii=False)}",
         f"Average latency: {summary['average_latency_ms']} ms",
-        f"Total payload: {summary['total_payload_bytes']} bytes",
-        f"Average payload: {summary['average_payload_bytes']} bytes",
+        "Edge-to-cloud payload (estimated request body)",
+        "-" * 48,
+        f"Total: {summary['total_edge_to_cloud_bytes']} bytes",
+        f"Average per image: {summary['average_edge_to_cloud_bytes']} bytes",
+        "Local Qwen/YOLO/SmolVLM processing contributes 0 bytes. The estimate "
+        "excludes HTTP headers, TLS overhead, and response traffic.",
         f"Generated crops: {summary['total_generated_crops']}",
         f"Crop fallbacks: {summary['crop_fallbacks']}",
         "",
@@ -217,9 +191,9 @@ def write_text_report(results, summary, report_path):
             f"YOLO {metrics.get('yolo_latency_ms', 0)} ms, "
             f"SmolVLM {metrics.get('vlm_latency_ms', 0)} ms, "
             f"Cloud {metrics.get('cloud_latency_ms', 0)} ms)",
-            f"Payload: {metrics['payload_bytes']} bytes",
+            "Edge-to-cloud payload (estimated request body): "
+            f"{metrics['edge_to_cloud_bytes']} bytes",
         ])
-
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
         "\n".join(lines) + "\n",
@@ -456,7 +430,7 @@ def run_pipeline(image_path, question):
 
     vlm_latency = 0.0
     cloud_latency = 0.0
-    payload_bytes = 0
+    edge_to_cloud_bytes = 0
 
     used_image = "NONE"
     used_crop_path = None
@@ -472,16 +446,11 @@ def run_pipeline(image_path, question):
         task_status = "SUCCESS"
         current_crop_path = None
         current_used_image = "NONE"
-        current_payload = 0
 
         if route == "DETECTIONS":
 
             answer_part = answer_detection(
                 decision,
-                detections
-            )
-
-            current_payload = calculate_json_bytes(
                 detections
             )
 
@@ -495,14 +464,10 @@ def run_pipeline(image_path, question):
                 detections
             )
             route = "DETECTIONS"
-            current_payload = calculate_json_bytes(
-                detections
-            )
 
         elif route == "CLOUD_ANSWER":
 
             current_used_image = "FULL_IMAGE"
-            current_payload = calculate_image_bytes(image)
 
             if len(decisions) == 1:
                 cloud_question = question
@@ -516,12 +481,14 @@ def run_pipeline(image_path, question):
                     f"Original question: {question}"
                 )
 
-            answer_part, latency = ask_deepseek(
+            answer_part, latency, request_body_bytes = ask_deepseek(
                 image,
-                cloud_question
+                cloud_question,
+                return_request_bytes=True
             )
 
             cloud_latency += latency
+            edge_to_cloud_bytes += request_body_bytes
 
         else:
 
@@ -552,10 +519,6 @@ def run_pipeline(image_path, question):
                     )
 
                     route = "FULL_IMAGE"
-
-            current_payload = calculate_image_bytes(
-                target_image
-            )
 
             # Build VLM question.
             if len(decisions) == 1:
@@ -613,7 +576,6 @@ def run_pipeline(image_path, question):
                 target_image,
                 vlm_question
             )
-
             vlm_latency += latency
 
         # --------------------------
@@ -626,7 +588,6 @@ def run_pipeline(image_path, question):
             )
 
         used_models = route_models(requested, route)
-        payload_bytes += current_payload
 
         if current_used_image != "NONE":
             used_image = current_used_image
@@ -728,7 +689,7 @@ def run_pipeline(image_path, question):
         "total_latency_ms": round(
             total_latency * 1000, 2
         ),
-        "payload_bytes": payload_bytes
+        "edge_to_cloud_bytes": edge_to_cloud_bytes
     }
 
     # --------------------------
@@ -924,8 +885,8 @@ def main(argv=None):
                 "ms"
             )
             print(
-                "Payload:",
-                result["metrics"]["payload_bytes"],
+                "Edge-to-cloud payload (estimated request body):",
+                result["metrics"]["edge_to_cloud_bytes"],
                 "bytes"
             )
 
@@ -1032,11 +993,6 @@ def main(argv=None):
         for r in successful_results
     )
 
-    total_payload_bytes = sum(
-        r["metrics"]["payload_bytes"]
-        for r in successful_results
-    )
-
     average_latency = (
         sum(
             r["metrics"]["total_latency_ms"]
@@ -1045,11 +1001,14 @@ def main(argv=None):
         if total_success else 0
     )
 
-    average_payload_bytes = (
-        total_payload_bytes / total_success
+    total_edge_to_cloud_bytes = sum(
+        result["metrics"]["edge_to_cloud_bytes"]
+        for result in successful_results
+    )
+    average_edge_to_cloud_bytes = (
+        total_edge_to_cloud_bytes / total_success
         if total_success else 0
     )
-
     # --------------------------
     # Step 7: Build Summary
     # --------------------------
@@ -1073,9 +1032,9 @@ def main(argv=None):
         "batch_latency_s": round(
             batch_latency, 3
         ),
-        "total_payload_bytes": total_payload_bytes,
-        "average_payload_bytes": round(
-            average_payload_bytes, 2
+        "total_edge_to_cloud_bytes": total_edge_to_cloud_bytes,
+        "average_edge_to_cloud_bytes": round(
+            average_edge_to_cloud_bytes, 2
         ),
         "qwen_model": "Qwen3-0.6B",
         "yolo_model": str(config.YOLO_MODEL),
