@@ -96,7 +96,9 @@ def route_models(requested_route, route):
     """Return the answering/inference models used for a task route."""
 
     if requested_route == "CROP" and route == "CROP":
-        return ["YOLO", "SmolVLM"]
+        return ["YOLO", "Cloud (DeepSeek)"]
+    if requested_route == "CROP" and route == "CLOUD_ANSWER":
+        return ["YOLO", "Cloud (DeepSeek)"]
     if route == "DETECTIONS":
         return ["YOLO"]
     if route == "CLOUD_ANSWER":
@@ -104,6 +106,8 @@ def route_models(requested_route, route):
     if route == "FULL_IMAGE":
         return ["SmolVLM"]
     return []
+
+
 def format_route(route, models, requested_route=None):
     """Format a route with its model names and any fallback information."""
 
@@ -137,7 +141,8 @@ def write_text_report(results, summary, report_path):
         "-" * 48,
         f"Total: {summary['total_edge_to_cloud_bytes']} bytes",
         f"Average per image: {summary['average_edge_to_cloud_bytes']} bytes",
-        "Local Qwen/YOLO/SmolVLM processing contributes 0 bytes. The estimate "
+        "Local Qwen/YOLO/SmolVLM processing contributes 0 bytes. "
+        "Crop routes upload the detected crop to DeepSeek; the estimate "
         "excludes HTTP headers, TLS overhead, and response traffic.",
         f"Generated crops: {summary['total_generated_crops']}",
         f"Crop fallbacks: {summary['crop_fallbacks']}",
@@ -174,6 +179,10 @@ def write_text_report(results, summary, report_path):
             f"Target: {result.get('target_class') or 'N/A'}",
             f"Answer: {result['answer']}",
         ])
+        if result.get("used_image") != "NONE":
+            lines.append(f"Image used: {result['used_image']}")
+        if result.get("used_crop_path"):
+            lines.append(f"Crop output: {result['used_crop_path']}")
 
         task_results = result.get("task_results", [])
         if len(task_results) > 1:
@@ -184,6 +193,14 @@ def write_text_report(results, summary, report_path):
                     f"({format_route(task['route'], task.get('models', []), task.get('requested_route'))}): "
                     f"{task['answer']}"
                 )
+                if task.get("used_image") != "NONE":
+                    lines.append(
+                        f"     Image used: {task['used_image']}"
+                    )
+                if task.get("used_crop_path"):
+                    lines.append(
+                        f"     Crop output: {task['used_crop_path']}"
+                    )
 
         lines.extend([
             f"Latency: {metrics['total_latency_ms']} ms "
@@ -494,6 +511,7 @@ def run_pipeline(image_path, question):
 
             target_image = image
             current_used_image = "FULL_IMAGE"
+            crop_available = False
 
             if route == "CROP":
 
@@ -504,6 +522,7 @@ def run_pipeline(image_path, question):
 
                     target_image = crops[target_class]
                     current_used_image = "CROP"
+                    crop_available = True
 
                     current_crop_path = crop_paths[
                         target_class
@@ -518,34 +537,67 @@ def run_pipeline(image_path, question):
                         target_class
                     )
 
-                    route = "FULL_IMAGE"
+                    route = "CLOUD_ANSWER"
 
-            # Build VLM question.
-            if len(decisions) == 1:
-
-                vlm_question = question
-
-            else:
-
-                vlm_question = (
-                    "Answer only this part of the "
-                    "user's question: "
-                    f"task={decision['semantic_type']}, "
-                    f"target={decision['target']}, "
-                    f"attribute={decision['attribute']}. "
-                    f"Original question: {question}"
-                )
-
-            if decision["semantic_type"] == "ocr":
-                if route == "CROP" and target_class:
-                    vlm_question = (
+            if requested == "CROP":
+                if decision["semantic_type"] == "ocr":
+                    cloud_question = (
                         f"Read only clearly visible text on the {target_class} "
-                        "in this cropped image. Ignore text outside the target. "
+                        "in the provided image. Ignore text outside the target. "
                         "Do not describe the image or infer unreadable text. "
-                        "If no text on the target is readable, reply exactly: "
-                        "\"No readable text is visible on the target.\""
+                        "If no text on the target is readable, say so."
+                    )
+                elif (
+                    decision["semantic_type"] == "attribute"
+                    and (
+                        str(decision.get("attribute") or "").lower()
+                        in {"color", "colour"}
+                        or re.search(
+                            r"\bcolou?rs?\b",
+                            question,
+                            re.IGNORECASE
+                        )
+                    )
+                ):
+                    cloud_question = (
+                        f"Look at the {target_class} in the provided image and "
+                        "report the main color of its own material or surface. "
+                        "Ignore text, route numbers, signs, logos, labels, "
+                        "windows, lights, reflections, and the background. "
+                        "Do not read or repeat text. Give only a short color "
+                        "description; if uncertain, answer 'unclear'."
                     )
                 else:
+                    cloud_question = (
+                        "Answer the user's question using only the provided "
+                        f"image of the {target_class}. Original question: "
+                        f"{question}"
+                    )
+                if not crop_available:
+                    cloud_question += (
+                        " The requested target crop was unavailable, so this is "
+                        "the full image; focus only on the requested target."
+                    )
+                answer_part, latency, request_body_bytes = ask_deepseek(
+                    target_image,
+                    cloud_question,
+                    return_request_bytes=True
+                )
+                cloud_latency += latency
+                edge_to_cloud_bytes += request_body_bytes
+            else:
+                if len(decisions) == 1:
+                    vlm_question = question
+                else:
+                    vlm_question = (
+                        "Answer only this part of the user's question: "
+                        f"task={decision['semantic_type']}, "
+                        f"target={decision['target']}, "
+                        f"attribute={decision['attribute']}. "
+                        f"Original question: {question}"
+                    )
+
+                if decision["semantic_type"] == "ocr":
                     vlm_question = (
                         "Transcribe only text that is clearly readable "
                         "in the image. Do not describe the image or infer "
@@ -553,30 +605,32 @@ def run_pipeline(image_path, question):
                         "text, reply exactly: "
                         "\"No readable text is visible in the image.\""
                     )
-            elif (
-                decision["semantic_type"] == "attribute"
-                and (
-                    str(decision.get("attribute") or "").lower()
-                    in {"color", "colour"}
-                    or re.search(r"\bcolou?rs?\b", question, re.IGNORECASE)
-                )
-            ):
-                target_name = target_class or decision.get("target") or "object"
-                vlm_question = (
-                    f"Look at the {target_name} crop and answer this color question. "
-                    "Report the main color of the object's own material or surface. "
-                    "Ignore any text, route numbers, signs, logos, labels, windows, "
-                    "lights, reflections, and the background; do not read or repeat "
-                    "text from the image. Reply with only a short color description, "
-                    "for example, 'white with teal accents'. If the object's surface "
-                    "color cannot be determined, reply 'unclear'."
-                )
+                elif (
+                    decision["semantic_type"] == "attribute"
+                    and (
+                        str(decision.get("attribute") or "").lower()
+                        in {"color", "colour"}
+                        or re.search(
+                            r"\bcolou?rs?\b",
+                            question,
+                            re.IGNORECASE
+                        )
+                    )
+                ):
+                    target_name = decision.get("target") or "object"
+                    vlm_question = (
+                        f"Look at the {target_name} in the image and answer "
+                        "the color question. Report the main color of the "
+                        "object's own material or surface. Ignore text, signs, "
+                        "labels, lights, reflections, and background. Reply "
+                        "with a short color description or 'unclear'."
+                    )
 
-            answer_part, latency = ask_vlm(
-                target_image,
-                vlm_question
-            )
-            vlm_latency += latency
+                answer_part, latency = ask_vlm(
+                    target_image,
+                    vlm_question
+                )
+                vlm_latency += latency
 
         # --------------------------
         # Validate Task Answer
@@ -603,7 +657,9 @@ def run_pipeline(image_path, question):
             "models": used_models,
             "target_class": target_class,
             "answer": answer_part,
-            "status": task_status
+            "status": task_status,
+            "used_image": current_used_image,
+            "used_crop_path": current_crop_path
         })
 
     # --------------------------

@@ -416,8 +416,8 @@
           </div>
           <div class="routes">
             <div class="route"><strong>YOLO · local</strong><span>Supported object existence, counting, and listing.</span></div>
-            <div class="route"><strong>YOLO crop → SmolVLM · local</strong><span>Attributes of detected objects, such as appearance or color.</span></div>
-            <div class="route"><strong>OCR · local</strong><span>For supported targets, YOLO finds the object and SmolVLM reads text on its crop; if absent, YOLO reports that.</span></div>
+            <div class="route"><strong>YOLO crop → DeepSeek · cloud</strong><span>Supported-target attributes and OCR; only the detected crop is uploaded.</span></div>
+            <div class="route"><strong>OCR · local</strong><span>General image OCR uses SmolVLM; for a supported target, YOLO checks it first and sends its crop to DeepSeek.</span></div>
             <div class="route"><strong>DeepSeek · cloud</strong><span>Complex questions or unsupported object categories.</span></div>
           </div>
         </div>
@@ -426,7 +426,7 @@
       <section id="task-routes" aria-labelledby="task-routes-title">
         <div class="section-heading">
           <h2 id="task-routes-title">Question-to-route examples</h2>
-          <p>The input image is available to the pipeline. Local routes process it on-device; only the cloud route sends the full image to DeepSeek.</p>
+          <p>The input image is available to the pipeline. Local routes process it on-device; cloud routes send either a target crop or, when required, the full image to DeepSeek.</p>
         </div>
         <div class="card results-card">
           <div class="table-scroll">
@@ -461,14 +461,14 @@
                 <tr>
                   <td>Attribute</td>
                   <td>What color is the bus?</td>
-                  <td>Full image for YOLO; detected bus crop for SmolVLM</td>
-                  <td class="model-tag">YOLO → SmolVLM; if no bus is detected, report that</td>
+                  <td>Detected bus crop uploaded to cloud</td>
+                  <td class="model-tag">YOLO → DeepSeek; if no bus is detected, report that</td>
                 </tr>
                 <tr>
                   <td>Attribute</td>
                   <td>Describe the image.</td>
-                  <td>Full image for YOLO; target crop when supported and detected</td>
-                  <td class="model-tag">YOLO → SmolVLM; if target is absent, YOLO reports that</td>
+                  <td>Full image processed locally</td>
+                  <td class="model-tag">SmolVLM</td>
                 </tr>
                 <tr>
                   <td>OCR</td>
@@ -486,7 +486,7 @@
             </table>
           </div>
         </div>
-        <p class="note">Local Qwen, YOLO, and SmolVLM processing does not upload data to the cloud, so its edge-to-cloud payload is 0 B. Only cloud routes upload a request containing the image and prompt.</p>
+        <p class="note">Local Qwen, YOLO, and SmolVLM processing does not upload data to the cloud, so local-only routes have 0 B edge-to-cloud payload. Targeted crop routes upload the YOLO crop and prompt; full-image cloud routes upload the original image and prompt.</p>
       </section>
 
       <section id="results" aria-labelledby="results-title">
