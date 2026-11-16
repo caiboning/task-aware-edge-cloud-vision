@@ -1,5 +1,4 @@
 
-import argparse
 import json
 import re
 import time
@@ -136,16 +135,13 @@ def write_text_report(results, summary, report_path):
         f"Success rate: {summary['success_rate_percent']}%",
         f"Routes: {json.dumps(summary['route_counts'], ensure_ascii=False)}",
         f"Task types: {json.dumps(summary['task_counts'], ensure_ascii=False)}",
-        f"Average latency: {summary['average_latency_ms']} ms",
-        "Edge-to-cloud payload (estimated request body)",
-        "-" * 48,
-        f"Total: {summary['total_edge_to_cloud_bytes']} bytes",
-        f"Average per image: {summary['average_edge_to_cloud_bytes']} bytes",
+        f"Average end-to-end latency: {summary['average_latency_ms']} ms",
+        f"Average estimated Edge-to-Cloud request bytes: "
+        f"{summary['average_edge_to_cloud_bytes']} bytes",
         "Local Qwen/YOLO/SmolVLM processing contributes 0 bytes. "
-        "Crop routes upload the detected crop to DeepSeek; the estimate "
-        "excludes HTTP headers, TLS overhead, and response traffic.",
-        f"Generated crops: {summary['total_generated_crops']}",
-        f"Crop fallbacks: {summary['crop_fallbacks']}",
+        "Crop routes upload the detected crop to DeepSeek; payload is an "
+        "estimated serialized request body, excluding HTTP headers, TLS "
+        "overhead, and response traffic.",
         "",
         "Models",
         "-" * 6,
@@ -153,10 +149,18 @@ def write_text_report(results, summary, report_path):
         f"YOLO: {Path(summary['yolo_model']).name}",
         f"SmolVLM: {summary['vlm_model']}",
         f"DeepSeek: {summary['deepseek_model']}",
+    ]
+    lines.extend(
+        f"  {stage}: {latency} ms"
+        for stage, latency in summary[
+            "average_component_latency_ms"
+        ].items()
+    )
+    lines.extend([
         "",
         "Per-Image Results",
         "-" * 17,
-    ]
+    ])
 
     for index, result in enumerate(results, start=1):
         lines.extend([
@@ -204,10 +208,18 @@ def write_text_report(results, summary, report_path):
 
         lines.extend([
             f"Latency: {metrics['total_latency_ms']} ms "
-            f"(Qwen {metrics.get('llm_latency_ms', 0)} ms, "
-            f"YOLO {metrics.get('yolo_latency_ms', 0)} ms, "
-            f"SmolVLM {metrics.get('vlm_latency_ms', 0)} ms, "
-            f"Cloud {metrics.get('cloud_latency_ms', 0)} ms)",
+            f"(image load {metrics['image_load_latency_ms']} ms, "
+            f"Qwen load {metrics['llm_model_load_latency_ms']} ms, "
+            f"Qwen inference {metrics['llm_latency_ms']} ms, "
+            f"router {metrics['router_latency_ms']} ms, "
+            f"YOLO load {metrics['yolo_model_load_latency_ms']} ms, "
+            f"YOLO inference {metrics['yolo_latency_ms']} ms, "
+            f"crop {metrics['crop_latency_ms']} ms, "
+            f"SmolVLM setup {metrics['vlm_preparation_latency_ms']} ms, "
+            f"SmolVLM call {metrics['vlm_latency_ms']} ms, "
+            f"DeepSeek setup {metrics['cloud_preparation_latency_ms']} ms, "
+            f"DeepSeek API {metrics['cloud_latency_ms']} ms, "
+            f"other {metrics['other_latency_ms']} ms)",
             "Edge-to-cloud payload (estimated request body): "
             f"{metrics['edge_to_cloud_bytes']} bytes",
         ])
@@ -323,8 +335,10 @@ def run_pipeline(image_path, question):
     # Step 1: Load Image
     # --------------------------
 
+    image_load_start = time.perf_counter()
     with Image.open(image_path) as source:
         image = source.convert("RGB")
+    image_load_latency = time.perf_counter() - image_load_start
 
     relative_path = image_path.relative_to(
         config.IMAGE_DIR.resolve()
@@ -334,12 +348,20 @@ def run_pipeline(image_path, question):
     # Step 2: Qwen Classification
     # --------------------------
 
-    llm_start = time.perf_counter()
+    llm_model_load_latency = 0.0
+    if llm is None:
+        llm_model_load_start = time.perf_counter()
+        llm_model = get_llm()
+        llm_model_load_latency = (
+            time.perf_counter() - llm_model_load_start
+        )
+    else:
+        llm_model = llm
 
-    task_plan = get_llm().understand_task(
+    llm_start = time.perf_counter()
+    task_plan = llm_model.understand_task(
         question
     )
-
     llm_latency = (
         time.perf_counter() - llm_start
     )
@@ -361,6 +383,7 @@ def run_pipeline(image_path, question):
 
     detections = []
     yolo_latency = 0.0
+    yolo_model_load_latency = 0.0
     yolo_image_path = None
     crops = {}
     crop_info = {}
@@ -377,7 +400,14 @@ def run_pipeline(image_path, question):
         # Step 4: YOLO Detection
         # --------------------------
 
-        yolo_detector = get_detector()
+        if detector is None:
+            yolo_model_load_start = time.perf_counter()
+            yolo_detector = get_detector()
+            yolo_model_load_latency = (
+                time.perf_counter() - yolo_model_load_start
+            )
+        else:
+            yolo_detector = detector
 
         detections, yolo_latency, raw_result = (
             yolo_detector.detect(
@@ -446,7 +476,9 @@ def run_pipeline(image_path, question):
     task_results = []
 
     vlm_latency = 0.0
+    vlm_preparation_latency = 0.0
     cloud_latency = 0.0
+    cloud_preparation_latency = 0.0
     edge_to_cloud_bytes = 0
 
     used_image = "NONE"
@@ -498,10 +530,15 @@ def run_pipeline(image_path, question):
                     f"Original question: {question}"
                 )
 
+            cloud_call_start = time.perf_counter()
             answer_part, latency, request_body_bytes = ask_deepseek(
                 image,
                 cloud_question,
                 return_request_bytes=True
+            )
+            cloud_preparation_latency += max(
+                0.0,
+                time.perf_counter() - cloud_call_start - latency
             )
 
             cloud_latency += latency
@@ -578,10 +615,15 @@ def run_pipeline(image_path, question):
                         " The requested target crop was unavailable, so this is "
                         "the full image; focus only on the requested target."
                     )
+                cloud_call_start = time.perf_counter()
                 answer_part, latency, request_body_bytes = ask_deepseek(
                     target_image,
                     cloud_question,
                     return_request_bytes=True
+                )
+                cloud_preparation_latency += max(
+                    0.0,
+                    time.perf_counter() - cloud_call_start - latency
                 )
                 cloud_latency += latency
                 edge_to_cloud_bytes += request_body_bytes
@@ -626,9 +668,14 @@ def run_pipeline(image_path, question):
                         "with a short color description or 'unclear'."
                     )
 
+                vlm_call_start = time.perf_counter()
                 answer_part, latency = ask_vlm(
                     target_image,
                     vlm_question
+                )
+                vlm_preparation_latency += max(
+                    0.0,
+                    time.perf_counter() - vlm_call_start - latency
                 )
                 vlm_latency += latency
 
@@ -723,9 +770,32 @@ def run_pipeline(image_path, question):
         time.perf_counter() - total_start
     )
 
+    measured_stage_latency = sum((
+        image_load_latency,
+        llm_model_load_latency,
+        llm_latency,
+        router_latency,
+        yolo_model_load_latency,
+        yolo_latency,
+        crop_latency,
+        vlm_preparation_latency,
+        vlm_latency,
+        cloud_preparation_latency,
+        cloud_latency
+    ))
+
     metrics = {
+        "image_load_latency_ms": round(
+            image_load_latency * 1000, 2
+        ),
+        "llm_model_load_latency_ms": round(
+            llm_model_load_latency * 1000, 2
+        ),
         "llm_latency_ms": round(
             llm_latency * 1000, 2
+        ),
+        "yolo_model_load_latency_ms": round(
+            yolo_model_load_latency * 1000, 2
         ),
         "yolo_latency_ms": round(
             yolo_latency * 1000, 2
@@ -739,11 +809,21 @@ def run_pipeline(image_path, question):
         "vlm_latency_ms": round(
             vlm_latency * 1000, 2
         ),
+        "vlm_preparation_latency_ms": round(
+            vlm_preparation_latency * 1000, 2
+        ),
         "cloud_latency_ms": round(
             cloud_latency * 1000, 2
         ),
+        "cloud_preparation_latency_ms": round(
+            cloud_preparation_latency * 1000, 2
+        ),
         "total_latency_ms": round(
             total_latency * 1000, 2
+        ),
+        "other_latency_ms": round(
+            max(0.0, total_latency - measured_stage_latency) * 1000,
+            2
         ),
         "edge_to_cloud_bytes": edge_to_cloud_bytes
     }
@@ -789,46 +869,19 @@ def run_pipeline(image_path, question):
     }
 
 # ==============================
-# Batch Pipeline Test
+# Batch Pipeline Runner
 # ==============================
 
-def main(argv=None):
-
-    # --------------------------
-    # Command-Line Options
-    # --------------------------
-
-    parser = argparse.ArgumentParser(
-        description="Run the task-aware vision pipeline."
-    )
-    parser.add_argument(
-        "--report-name",
-        default="results",
-        help=(
-            "Custom report filename or stem. A timestamp is added "
-            "to preserve reports from previous runs."
-        )
-    )
-    args = parser.parse_args(argv)
-    report_path = get_report_path(args.report_name)
-
-    # --------------------------
-    # Step 1: Find Images
-    # --------------------------
-
-    image_paths = sorted(
-        p for p in config.IMAGE_DIR.rglob("*")
-        if p.is_file()
-        and p.suffix.lower() in config.IMAGE_EXTENSIONS
-    ) if config.IMAGE_DIR.exists() else []
+def run_batch(question, image_paths, report_name="results"):
+    image_paths = list(image_paths)
+    report_path = get_report_path(report_name)
+    question = question.strip() if question else ""
 
     if not image_paths:
-
         logger.warning(
             "No supported images found in %s",
             config.IMAGE_DIR
         )
-
         return
 
     print(f"\nFound {len(image_paths)} images.")
@@ -836,24 +889,12 @@ def main(argv=None):
     print("VLM Model:", config.VLM_MODEL)
     print("DeepSeek Model:", DEEPSEEK_MODEL)
 
-    # --------------------------
-    # Step 2: Question
-    # --------------------------
-
-    try:
-        question = input("\nQuestion: ").strip()
-
-    except (KeyboardInterrupt, EOFError):
-        print("\nExiting pipeline.")
-        return
-
     if not question:
-
         logger.warning("No question entered")
         return
 
     # --------------------------
-    # Step 3: Output Directories
+    # Step 1: Output Directories
     # --------------------------
 
     for directory in [
@@ -877,7 +918,7 @@ def main(argv=None):
     logger.info("Total images: %d", len(image_paths))
 
     # --------------------------
-    # Step 4: Batch Processing
+    # Step 2: Batch Processing
     # --------------------------
 
     for index, image_path in enumerate(
@@ -975,7 +1016,7 @@ def main(argv=None):
     )
 
     # --------------------------
-    # Step 5: Save Results
+    # Step 3: Save Results
     # --------------------------
 
     with open(
@@ -1003,7 +1044,7 @@ def main(argv=None):
         )
 
     # --------------------------
-    # Step 6: Summary
+    # Step 4: Summary
     # --------------------------
 
     successful_results = [
@@ -1056,6 +1097,31 @@ def main(argv=None):
         ) / total_success
         if total_success else 0
     )
+    latency_components = {
+        "image_load": "image_load_latency_ms",
+        "qwen_model_load": "llm_model_load_latency_ms",
+        "qwen_inference": "llm_latency_ms",
+        "router": "router_latency_ms",
+        "yolo_model_load": "yolo_model_load_latency_ms",
+        "yolo_inference": "yolo_latency_ms",
+        "crop_generation": "crop_latency_ms",
+        "smolvlm_preparation": "vlm_preparation_latency_ms",
+        "smolvlm_call": "vlm_latency_ms",
+        "deepseek_preparation": "cloud_preparation_latency_ms",
+        "deepseek_api": "cloud_latency_ms",
+        "other_pipeline": "other_latency_ms",
+        "total": "total_latency_ms"
+    }
+    average_component_latency = {
+        stage: round(
+            sum(
+                result["metrics"][metric]
+                for result in successful_results
+            ) / total_success,
+            2
+        ) if total_success else 0
+        for stage, metric in latency_components.items()
+    }
 
     total_edge_to_cloud_bytes = sum(
         result["metrics"]["edge_to_cloud_bytes"]
@@ -1066,7 +1132,7 @@ def main(argv=None):
         if total_success else 0
     )
     # --------------------------
-    # Step 7: Build Summary
+    # Step 5: Build Summary
     # --------------------------
 
     summary = {
@@ -1085,6 +1151,7 @@ def main(argv=None):
         "average_latency_ms": round(
             average_latency, 2
         ),
+        "average_component_latency_ms": average_component_latency,
         "batch_latency_s": round(
             batch_latency, 3
         ),
@@ -1106,7 +1173,7 @@ def main(argv=None):
     )
 
     # --------------------------
-    # Step 8: Save Summary
+    # Step 6: Save Summary
     # --------------------------
 
     with open(
@@ -1130,14 +1197,19 @@ def main(argv=None):
     )
 
     # --------------------------
-    # Step 9: Print Summary
+    # Step 7: Print Summary
     # --------------------------
 
     print("\n========== Pipeline Summary ==========")
 
+    display_summary = {
+        key: value
+        for key, value in summary.items()
+        if key not in {"total_generated_crops", "crop_fallbacks"}
+    }
     print(
         json.dumps(
-            summary,
+            display_summary,
             indent=4,
             ensure_ascii=False
         )
@@ -1146,7 +1218,4 @@ def main(argv=None):
     print("\nResults saved to:")
     print(config.PIPELINE_OUTPUT_DIR)
     print("Readable report:", report_path)
-
-
-if __name__ == "__main__":
-    main()
+    return summary
