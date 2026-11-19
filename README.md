@@ -26,16 +26,29 @@ On Linux/macOS:
 source .env/bin/activate
 ```
 
-Install the Python dependencies listed in `requirements.txt`:
+SmolVLM requires Ollama to run locally. If Ollama is not installed, install it using Windows PowerShell:
 
 ```bash
-python -m pip install -r requirements.txt
+winget install Ollama.Ollama
 ```
 
-Install [Ollama](https://ollama.com/download) separately and pull the SmolVLM model:
+After installation, restart the VS Code terminal and verify the installation:
+
+```bash
+ollama --version
+```
+
+Otherwise, install [Ollama](https://ollama.com/download) separately and pull the SmolVLM model:
 
 ```bash
 ollama pull ahmadwaqar/smolvlm2-256m-video:q8_0
+```
+
+Install the Python dependencies and other models listed in `requirements.txt`and `download_models.py`:
+
+```bash
+python -m pip install -r requirements.txt
+python download_models.py
 ```
 
 Ensure the Ollama service is running. YOLO NCNN and Qwen GGUF model weights must be downloaded separately and placed at the paths specified in the project configuration.
