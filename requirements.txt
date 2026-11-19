@@ -1,0 +1,10 @@
+# Task-Aware Edge-Cloud Vision - Python dependencies
+# Use a compatible Python version (Python 3.11 recommended).
+Pillow
+numpy
+opencv-python
+ultralytics
+llama-cpp-python
+ollama
+openai
+python-dotenv

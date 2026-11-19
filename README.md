@@ -7,6 +7,39 @@ The system supports multiple strategies, including local inference using lightwe
 
 Our goal is to reduce communication overhead and end-to-end latency while maintaining task accuracy. We evaluate different strategies based on task accuracy, transmitted bytes, and end-to-end latency.
 
+## Installation
+Python 3.11 is recommended. Create and activate a virtual environment:
+
+```bash
+python -m venv .env
+```
+
+On Windows (PowerShell):
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+On Linux/macOS:
+
+```bash
+source .env/bin/activate
+```
+
+Install the Python dependencies listed in `requirements.txt`:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Install [Ollama](https://ollama.com/download) separately and pull the SmolVLM model:
+
+```bash
+ollama pull ahmadwaqar/smolvlm2-256m-video:q8_0
+```
+
+Ensure the Ollama service is running. YOLO NCNN and Qwen GGUF model weights must be downloaded separately and placed at the paths specified in the project configuration.
+
 ## How to Use
 Run both the task-aware pipeline and the full-image DeepSeek baseline on the same images and question:
 
