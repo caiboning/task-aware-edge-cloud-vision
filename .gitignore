@@ -20,6 +20,8 @@ outputs/images_test_result/
 outputs/
 
 # Local credentials
+.venv/
+venv/
 .env
 .env.*
 !.env.example
