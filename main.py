@@ -4,7 +4,6 @@ from toolbar import config
 
 
 # Edit these values before running the paired comparison.
-QUESTION = "What objects are in the image?"
 IMAGE_DIR = config.DATA_DIR / "images_test"
 OUTPUT_DIR = config.OUTPUT_DIR / "images_test_result"
 PIPELINE_REPORT_NAME = "results"
@@ -36,20 +35,20 @@ def main():
 
     from baseline import find_images, run_baseline
     from pipeline import run_batch as run_task_aware_pipeline
+    from toolbar.accuracy import run_accuracy
     from toolbar.logger import get_logger
 
     logger = get_logger()
-    question = QUESTION.strip()
+
+    question = input("Question: ").strip()
+
     if not question:
-        logger.warning("Set QUESTION in main.py before running")
+        logger.warning("Question cannot be empty")
         return
 
     image_paths = find_images()
     if not image_paths:
-        logger.warning(
-            "No supported images found in %s",
-            config.IMAGE_DIR
-        )
+        logger.warning("No supported images found in %s", config.IMAGE_DIR)
         return
 
     print(f"Question: {question}")
@@ -71,6 +70,7 @@ def main():
         report_name=BASELINE_REPORT_NAME
     )
 
+    run_accuracy(config.PIPELINE_OUTPUT_DIR)
 
 if __name__ == "__main__":
     main()
