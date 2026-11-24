@@ -37,6 +37,8 @@ def main():
     from pipeline import run_batch as run_task_aware_pipeline
     from toolbar.accuracy import run_accuracy
     from toolbar.logger import get_logger
+    from toolbar.model_profiles import refresh_profiles
+    from toolbar.payload_totals import finalize_payload
 
     logger = get_logger()
 
@@ -56,6 +58,8 @@ def main():
     print(f"Output directory: {config.PIPELINE_OUTPUT_DIR}")
     print(f"Found {len(image_paths)} images.")
 
+    profiles = refresh_profiles()
+
     print("\n========== Task-aware pipeline ==========")
     run_task_aware_pipeline(
         question=question,
@@ -70,7 +74,9 @@ def main():
         report_name=BASELINE_REPORT_NAME
     )
 
-    run_accuracy(config.PIPELINE_OUTPUT_DIR)
+    accuracy = run_accuracy(config.PIPELINE_OUTPUT_DIR)
+
+    finalize_payload(config.PIPELINE_OUTPUT_DIR, profiles, accuracy)
 
 if __name__ == "__main__":
     main()

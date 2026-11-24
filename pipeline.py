@@ -11,13 +11,13 @@ from PIL import Image
 
 from toolbar import config
 from toolbar.logger import get_logger
+from toolbar.profiler import profile_pipeline
 from toolbar.router import route_task
 from toolbar.crop import generate_crops
 from toolbar.detection_answer import (
     answer_detection,
     answer_missing_target
 )
-from toolbar.profiler import profile_pipeline
 
 from models.Qwen.llm import LocalLLM
 from models.YOLO.detector import YOLODetector
@@ -117,6 +117,12 @@ def format_route(route, models, requested_route=None):
     if requested_route and requested_route != route:
         formatted += f" [fallback from {requested_route}]"
     return formatted
+
+
+def format_total_payload(metrics):
+    total_bytes = metrics.get("edge_cloud_total_bytes")
+    size = f"{total_bytes} bytes" if total_bytes is not None else "N/A"
+    return f"Edge-to-cloud payload (actual request + response bodies): {size}"
 
 
 def write_text_report(results, summary, report_path):
@@ -223,6 +229,7 @@ def write_text_report(results, summary, report_path):
             f"other {metrics['other_latency_ms']} ms)",
             "Edge-to-cloud payload (estimated request body): "
             f"{metrics['edge_to_cloud_bytes']} bytes",
+            format_total_payload(metrics),
         ])
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
@@ -428,47 +435,48 @@ def run_pipeline(image_path, question):
             len(detections)
         )
 
-        # --------------------------
-        # Step 5: Generate Crops
-        # --------------------------
+        if any(decision["route"] == "CROP" for decision in decisions):
+            # --------------------------
+            # Step 5: Generate Crops
+            # --------------------------
 
-        crop_start = time.perf_counter()
+            crop_start = time.perf_counter()
 
-        crops, crop_info = generate_crops(
-            image,
-            detections
-        )
+            crops, crop_info = generate_crops(
+                image,
+                detections
+            )
 
-        crop_paths = save_crops(
-            crops,
-            relative_path
-        )
+            crop_paths = save_crops(
+                crops,
+                relative_path
+            )
 
-        crop_latency = (
-            time.perf_counter() - crop_start
-        )
+            crop_latency = (
+                time.perf_counter() - crop_start
+            )
 
-        for class_name, info in crop_info.items():
+            for class_name, info in crop_info.items():
 
-            if info["status"] == "SUCCESS":
+                if info["status"] == "SUCCESS":
 
-                logger.info(
-                    "CROP SUCCESS | Image: %s | "
-                    "Class: %s | Method: %s",
-                    relative_path,
-                    class_name,
-                    info["method"]
-                )
+                    logger.info(
+                        "CROP SUCCESS | Image: %s | "
+                        "Class: %s | Method: %s",
+                        relative_path,
+                        class_name,
+                        info["method"]
+                    )
 
-            else:
+                else:
 
-                logger.warning(
-                    "CROP FALLBACK | Image: %s | "
-                    "Class: %s | Reason: %s",
-                    relative_path,
-                    class_name,
-                    info["reason"]
-                )
+                    logger.warning(
+                        "CROP FALLBACK | Image: %s | "
+                        "Class: %s | Reason: %s",
+                        relative_path,
+                        class_name,
+                        info["reason"]
+                    )
 
     # --------------------------
     # Step 6: Answer
@@ -644,8 +652,7 @@ def run_pipeline(image_path, question):
                     vlm_question = (
                         "Transcribe only text that is clearly readable "
                         "in the image. Do not describe the image or infer "
-                        "text that cannot be read. If there is no readable "
-                        "text, reply exactly: "
+                        "unreadable text. If there is no readable text, reply exactly: "
                         "\"No readable text is visible in the image.\""
                     )
                 elif (
@@ -987,6 +994,7 @@ def run_batch(question, image_paths, report_name="results"):
                 result["metrics"]["edge_to_cloud_bytes"],
                 "bytes"
             )
+            print(format_total_payload(result["metrics"]))
 
         except Exception as e:
 

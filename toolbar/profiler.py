@@ -3,6 +3,7 @@
 import json
 import logging
 import stat
+from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import wraps
 from pathlib import Path
@@ -73,10 +74,7 @@ def update_model_profiles(update):
         temporary_path = None
         try:
             with NamedTemporaryFile(
-                mode="w",
-                encoding="utf-8",
-                dir=output.parent,
-                delete=False
+                mode="w", encoding="utf-8", dir=output.parent, delete=False
             ) as temporary:
                 temporary_path = Path(temporary.name)
                 json.dump(contents, temporary, ensure_ascii=False, indent=4)
@@ -112,46 +110,62 @@ def _sum_bytes(stages, field):
     return sum(values) if all(value is not None for value in values) else None
 
 
+@contextmanager
+def collect_stage_profiles():
+    stages = []
+    token = _PIPELINE_STAGES.set(stages)
+    try:
+        yield stages
+    finally:
+        _PIPELINE_STAGES.reset(token)
+
+
+def cloud_body_sizes(stages, expected_calls):
+    cloud = [s for s in stages if s["stage"] == "deepseek_cloud_inference"]
+    if len(cloud) != expected_calls:
+        return None, None
+
+    return (
+        _sum_bytes(cloud, "network_request_bytes"),
+        _sum_bytes(cloud, "network_response_bytes")
+    )
+
+
 def profile_pipeline(function):
     @wraps(function)
     def wrapped(image_path, question):
-        stages = []
-        token = _PIPELINE_STAGES.set(stages)
-        try:
+        with collect_stage_profiles() as stages:
             result = function(image_path, question)
-        finally:
-            _PIPELINE_STAGES.reset(token)
+
+        result["runtime_metrics"] = stages
 
         metrics = result["metrics"]
-        cloud = [
-            stage for stage in stages
-            if stage["stage"] == "deepseek_cloud_inference"
-        ]
-        local = [
-            stage for stage in stages
-            if stage["stage"] == "smolvlm_inference"
-        ]
-
+        local = [s for s in stages if s["stage"] == "smolvlm_inference"]
         expected_cloud_calls = sum(
             task["route"] in {"CROP", "CLOUD_ANSWER"}
             for task in result["task_results"]
         )
         expected_local_calls = sum(
-            task["route"] == "FULL_IMAGE"
-            for task in result["task_results"]
+            task["route"] == "FULL_IMAGE" for task in result["task_results"]
         )
 
-        request_bytes = _sum_bytes(cloud, "network_request_bytes")
-        response_bytes = _sum_bytes(cloud, "network_response_bytes")
-        if len(cloud) != expected_cloud_calls:
-            request_bytes = None
-            response_bytes = None
-
+        request_bytes, response_bytes = cloud_body_sizes(
+            stages, expected_cloud_calls
+        )
         total_bytes = (
             request_bytes + response_bytes
             if request_bytes is not None and response_bytes is not None
             else None
         )
+
+        metrics["edge_cloud_request_bytes"] = request_bytes
+        metrics["edge_cloud_response_bytes"] = response_bytes
+        metrics["edge_cloud_total_bytes"] = total_bytes
+
+        result["communication_metrics"] = {
+            "request_bytes": request_bytes,
+            "response_bytes": response_bytes
+        }
 
         local_summary = {
             key: _sum_bytes(local, field) if len(local) == expected_local_calls else None

@@ -55,8 +55,28 @@ def ask_vlm(image, question, client=None):
         latency: float (seconds)
     """
 
+    observed = {
+        "request_bytes": None,
+        "response_bytes": None
+    }
+
+    def capture_request(request):
+        if request.url.path.endswith("/api/chat"):
+            observed["request_bytes"] = len(request.content)
+
+    def capture_response(response):
+        if response.request.url.path.endswith("/api/chat"):
+            response.read()
+            observed["response_bytes"] = len(response.content)
+
     if client is None:
-        client = Client(host=config.OLLAMA_HOST)
+        client = Client(
+            host=config.OLLAMA_HOST,
+            event_hooks={
+                "request": [capture_request],
+                "response": [capture_response]
+            }
+        )
 
     image_data = prepare_image(image)
 
@@ -105,8 +125,8 @@ def ask_vlm(image, question, client=None):
         "input_tokens": getattr(response, "prompt_eval_count", None),
         "output_tokens": getattr(response, "eval_count", None),
         "latency_ms": round(latency * 1000, 3),
-        "local_api_request_bytes": None,
-        "local_api_response_bytes": None,
+        "local_api_request_bytes": observed["request_bytes"],
+        "local_api_response_bytes": observed["response_bytes"],
         "peak_ram_bytes": None
     })
 

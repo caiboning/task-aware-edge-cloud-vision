@@ -1,3 +1,4 @@
+
 import time
 from pathlib import Path
 
@@ -11,6 +12,26 @@ from toolbar.profiler import (
     payload_size_bytes,
     save_stage_profile,
 )
+
+
+def tensor_output_bytes(output):
+    if isinstance(output, (list, tuple)):
+        sizes = [tensor_output_bytes(item) for item in output]
+        return sum(sizes) if all(size is not None for size in sizes) else None
+
+    if isinstance(output, dict):
+        sizes = [tensor_output_bytes(item) for item in output.values()]
+        return sum(sizes) if all(size is not None for size in sizes) else None
+
+    if callable(getattr(output, "numel", None)) and callable(
+        getattr(output, "element_size", None)
+    ):
+        return payload_size_bytes(output)
+
+    if isinstance(getattr(output, "nbytes", None), int):
+        return payload_size_bytes(output)
+
+    return None
 
 
 # ==============================
@@ -89,14 +110,44 @@ class YOLODetector:
                 f"Unsupported image type: {type(image)}"
             )
 
+        observed = {}
+
+        def capture_input(predictor):
+            # Observe the actual preprocessed tensor without changing inference.
+            original = predictor.preprocess
+            original_inference = predictor.inference
+
+            def preprocess(images):
+                tensor = original(images)
+                observed["input_tensor_bytes"] = payload_size_bytes(tensor)
+                return tensor
+
+            def inference(*args, **kwargs):
+                output = original_inference(*args, **kwargs)
+                observed["raw_output_tensor_bytes"] = tensor_output_bytes(output)
+                return output
+
+            predictor.preprocess = preprocess
+            predictor.inference = inference
+            observed["restore"] = (predictor, original, original_inference)
+
+        self.model.add_callback("on_predict_start", capture_input)
         start = time.perf_counter()
 
-        result = self.model.predict(
-            source=source,
-            conf=self.confidence,
-            device=self.device,
-            verbose=False
-        )[0]
+        try:
+            result = self.model.predict(
+                source=source,
+                conf=self.confidence,
+                device=self.device,
+                verbose=False
+            )[0]
+
+        finally:
+            self.model.callbacks["on_predict_start"].remove(capture_input)
+            if "restore" in observed:
+                predictor, original, original_inference = observed["restore"]
+                predictor.preprocess = original
+                predictor.inference = original_inference
 
         latency = time.perf_counter() - start
 
@@ -130,9 +181,12 @@ class YOLODetector:
         profile = {
             "stage": "yolo_detection",
             "model": Path(self.model_path).stem,
+            "model_path": str(Path(self.model_path).resolve()),
             "input_representation": input_representation,
             "input_payload_bytes": input_bytes,
-            "input_tensor_bytes": None,
+            "input_tensor_bytes": observed.get("input_tensor_bytes"),
+            "postprocessed_boxes_tensor_bytes": payload_size_bytes(result.boxes.data),
+            "raw_output_tensor_bytes": observed.get("raw_output_tensor_bytes"),
             "output_payload_bytes": json_size_bytes(detections),
             "detection_count": len(detections),
             "latency_ms": round(latency * 1000, 3),

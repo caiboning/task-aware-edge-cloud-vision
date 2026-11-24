@@ -8,6 +8,7 @@ from pathlib import Path
 from models.DEEPSEEK.deepseek import DEEPSEEK_MODEL, ask_deepseek
 from toolbar import config
 from toolbar.logger import get_logger
+from toolbar.profiler import collect_stage_profiles, cloud_body_sizes
 
 
 logger = get_logger()
@@ -141,11 +142,20 @@ def run_baseline(question, image_paths=None, report_name="baseline"):
 
         start = time.perf_counter()
         try:
-            answer, api_latency, request_bytes = ask_deepseek(
-                image_path,
-                question,
-                return_request_bytes=True
+            with collect_stage_profiles() as stages:
+                answer, api_latency, request_bytes = ask_deepseek(
+                    image_path,
+                    question,
+                    return_request_bytes=True
+                )
+
+            actual_request, actual_response = cloud_body_sizes(stages, 1)
+            actual_total = (
+                actual_request + actual_response
+                if actual_request is not None and actual_response is not None
+                else None
             )
+
             result = {
                 "image": image_name,
                 "question": question,
@@ -158,7 +168,15 @@ def run_baseline(question, image_paths=None, report_name="baseline"):
                     (time.perf_counter() - start) * 1000,
                     2
                 ),
-                "request_bytes": request_bytes
+                "request_bytes": request_bytes,
+                "runtime_metrics": stages,
+                "communication_metrics": {
+                    "request_bytes": actual_request,
+                    "response_bytes": actual_response
+                },
+                "edge_cloud_request_bytes": actual_request,
+                "edge_cloud_response_bytes": actual_response,
+                "edge_cloud_total_bytes": actual_total
             }
             results.append(result)
             print("Answer:", answer)
