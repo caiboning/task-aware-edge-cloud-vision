@@ -17,6 +17,7 @@ from toolbar.detection_answer import (
     answer_detection,
     answer_missing_target
 )
+from toolbar.profiler import profile_pipeline
 
 from models.Qwen.llm import LocalLLM
 from models.YOLO.detector import YOLODetector
@@ -315,7 +316,7 @@ def save_crops(crops, relative_path):
 # ==============================
 # Main Pipeline
 # ==============================
-
+@profile_pipeline
 def run_pipeline(image_path, question):
     """
     Pipeline:

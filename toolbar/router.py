@@ -1,5 +1,7 @@
-
 import re
+import time
+
+from toolbar.profiler import json_size_bytes, save_stage_profile
 
 # ==============================
 # YOLO COCO Classes
@@ -140,6 +142,7 @@ def route_task(task, detections=None, question=None):
             "route_task expects a Qwen task dictionary"
         )
 
+    started = time.perf_counter()
     kind = task.get("task_type")
     if kind not in (
         "existence",
@@ -158,11 +161,12 @@ def route_task(task, detections=None, question=None):
         str(target or "")
     )
 
-    if target_class is None and question and kind in (
+    uses_question = target_class is None and question and kind in (
         "existence",
         "counting",
         "ocr"
-    ):
+    )
+    if uses_question:
         target_class = find_target_class(question)
 
     if kind in ("existence", "counting", "listing"):
@@ -233,7 +237,7 @@ def route_task(task, detections=None, question=None):
         route = "CLOUD_ANSWER"
         task_type = "COMPLEX"
 
-    return {
+    decision = {
         "route": route,
         "task_type": task_type,
         "target_class": target_class,
@@ -241,3 +245,17 @@ def route_task(task, detections=None, question=None):
         "attribute": attribute,
         "semantic_type": kind
     }
+
+    latency_ms = (time.perf_counter() - started) * 1000
+    payload = {"task": task}
+    if uses_question:
+        payload["question"] = question
+
+    save_stage_profile({
+        "stage": "router_decision",
+        "route": route,
+        "input_payload_bytes": json_size_bytes(payload),
+        "output_payload_bytes": json_size_bytes(decision),
+        "latency_ms": round(latency_ms, 3)
+    })
+    return decision

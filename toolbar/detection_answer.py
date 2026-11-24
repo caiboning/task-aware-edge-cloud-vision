@@ -1,11 +1,37 @@
-
+import time
 from collections import Counter
+from functools import wraps
+
+from toolbar.profiler import json_size_bytes, payload_size_bytes, save_stage_profile
+
+
+def _profile_answer(function):
+    @wraps(function)
+    def wrapped(decision, detections):
+        started = time.perf_counter()
+        answer = function(decision, detections)
+        latency_ms = (time.perf_counter() - started) * 1000
+
+        save_stage_profile({
+            "stage": "local_detection_answer",
+            "operation": function.__name__,
+            "input_payload_bytes": json_size_bytes({
+                "decision": decision,
+                "detections": detections
+            }),
+            "output_payload_bytes": payload_size_bytes(answer),
+            "latency_ms": round(latency_ms, 3)
+        })
+        return answer
+
+    return wrapped
 
 
 # ==============================
 # Detection Answer
 # ==============================
 
+@_profile_answer
 def answer_detection(decision, detections):
     """
     Generate a natural-language answer
@@ -105,6 +131,7 @@ def answer_detection(decision, detections):
     )
 
 
+@_profile_answer
 def answer_missing_target(decision, detections):
     """Explain that a task cannot be answered when YOLO found no target."""
 

@@ -1,6 +1,6 @@
-
 import json
 import re
+import time
 from pathlib import Path
 
 from llama_cpp import Llama
@@ -287,22 +287,31 @@ class LocalLLM:
 
     def understand_task(self, question: str) -> dict:
 
+        from toolbar.profiler import (
+            json_size_bytes,
+            payload_size_bytes,
+            save_stage_profile,
+        )
+
         if not question.strip():
             raise ValueError(
                 "Question cannot be empty."
             )
 
+        started = time.perf_counter()
+        messages = [
+            {
+                "role": "system",
+                "content": TASK_SYSTEM_PROMPT
+            },
+            {
+                "role": "user",
+                "content": question
+            }
+        ]
+
         response = self.model.create_chat_completion(
-            messages=[
-                {
-                    "role": "system",
-                    "content": TASK_SYSTEM_PROMPT
-                },
-                {
-                    "role": "user",
-                    "content": question
-                }
-            ],
+            messages=messages,
             max_tokens=MAX_TOKENS,
             temperature=0.0,
             response_format={
@@ -334,6 +343,20 @@ class LocalLLM:
         plan = self._normalize_plan(plan)
 
         self._validate_plan(plan)
+
+        latency_ms = (time.perf_counter() - started) * 1000
+        usage = response.get("usage") or {}
+        profile = {
+            "stage": "qwen_classification",
+            "model": "Qwen",
+            "input_payload_bytes": json_size_bytes(messages),
+            "output_payload_bytes": payload_size_bytes(raw_output),
+            "parsed_output_payload_bytes": json_size_bytes(plan),
+            "input_tokens": usage.get("prompt_tokens"),
+            "output_tokens": usage.get("completion_tokens"),
+            "latency_ms": round(latency_ms, 3)
+        }
+        save_stage_profile(profile)
 
         return plan
 
@@ -467,7 +490,7 @@ class LocalLLM:
 
             for field in ("target", "attribute"):
 
-                value = task[field]
+                value = task.get(field)
 
                 if value is not None and not isinstance(
                     value, str

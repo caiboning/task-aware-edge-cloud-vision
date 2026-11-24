@@ -65,7 +65,7 @@ def main():
 
     print("\n========== Full-image DeepSeek baseline ==========")
     run_baseline(
-        question,
+        question=question,
         image_paths=image_paths,
         report_name=BASELINE_REPORT_NAME
     )

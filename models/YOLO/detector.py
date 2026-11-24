@@ -1,4 +1,3 @@
-
 import time
 from pathlib import Path
 
@@ -6,6 +5,12 @@ from PIL import Image
 from ultralytics import YOLO
 
 from toolbar import config
+from toolbar.profiler import (
+    file_size_bytes,
+    json_size_bytes,
+    payload_size_bytes,
+    save_stage_profile,
+)
 
 
 # ==============================
@@ -111,6 +116,31 @@ class YOLODetector:
                     for x in box.xyxy[0].tolist()
                 ]
             })
+
+        if isinstance(image, (str, Path)):
+            input_representation = "image_file"
+            try:
+                input_bytes = file_size_bytes(image)
+            except (OSError, ValueError):
+                input_bytes = None
+        else:
+            input_representation = "decoded_image_array"
+            input_bytes = payload_size_bytes(result.orig_img)
+
+        profile = {
+            "stage": "yolo_detection",
+            "model": Path(self.model_path).stem,
+            "input_representation": input_representation,
+            "input_payload_bytes": input_bytes,
+            "input_tensor_bytes": None,
+            "output_payload_bytes": json_size_bytes(detections),
+            "detection_count": len(detections),
+            "latency_ms": round(latency * 1000, 3),
+            "inference_latency_ms": result.speed.get("inference"),
+            "loading_latency_ms": None,
+            "peak_ram_bytes": None
+        }
+        save_stage_profile(profile, "yolo_detection_profiles")
 
         if return_result:
             return detections, latency, result

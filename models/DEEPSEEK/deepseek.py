@@ -10,6 +10,7 @@ from openai import OpenAI
 from PIL import Image
 
 from toolbar import config
+from toolbar.profiler import save_stage_profile
 
 
 load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
@@ -101,8 +102,17 @@ def ask_deepseek(
         ).encode("utf-8")
     )
 
+    completions = client.chat.completions
+    raw_completions = getattr(completions, "with_raw_response", None)
+
     start = time.perf_counter()
-    response = client.chat.completions.create(**request_data)
+    if raw_completions is None:
+        response = completions.create(**request_data)
+        http_response = None
+    else:
+        raw_response = raw_completions.create(**request_data)
+        response = raw_response.parse()
+        http_response = raw_response.http_response
     latency = time.perf_counter() - start
 
     if not response.choices:
@@ -124,6 +134,23 @@ def ask_deepseek(
         )
 
     result = (answer.strip(), latency)
+    usage = getattr(response, "usage", None)
+
+    save_stage_profile({
+        "stage": "deepseek_cloud_inference",
+        "model": DEEPSEEK_MODEL,
+        "estimated_request_body_bytes": request_bytes,
+        "network_request_bytes": (
+            len(http_response.request.content) if http_response is not None else None
+        ),
+        "network_response_bytes": (
+            len(http_response.content) if http_response is not None else None
+        ),
+        "input_tokens": getattr(usage, "prompt_tokens", None),
+        "output_tokens": getattr(usage, "completion_tokens", None),
+        "latency_ms": round(latency * 1000, 3)
+    })
+
     if return_request_bytes:
         return (*result, request_bytes)
     return result

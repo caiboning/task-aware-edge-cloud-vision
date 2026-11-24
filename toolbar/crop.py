@@ -1,7 +1,8 @@
-
+import time
 from collections import defaultdict
 
 from toolbar import config
+from toolbar.profiler import json_size_bytes, save_stage_profile
 
 
 # ==============================
@@ -145,6 +146,7 @@ def generate_crops(image, detections):
         crop_info: dict[class_name, metadata]
     """
 
+    started = time.perf_counter()
     groups = defaultdict(list)
 
     for detection in detections:
@@ -211,4 +213,22 @@ def generate_crops(image, detections):
             "bbox": final_bbox
         }
 
+    latency_ms = (time.perf_counter() - started) * 1000
+    image_bytes = image.width * image.height * 3 if image.mode == "RGB" else None
+    box_bytes = json_size_bytes(dict(groups))
+    crop_bytes = (
+        sum(crop.width * crop.height * 3 for crop in crops.values())
+        if image_bytes is not None or not crops
+        else None
+    )
+    save_stage_profile({
+        "stage": "image_crop",
+        "input_representation": "decoded_rgb_pixels" if image_bytes is not None else None,
+        "input_image_bytes": image_bytes,
+        "bounding_box_payload_bytes": box_bytes,
+        "input_payload_bytes": image_bytes + box_bytes if image_bytes is not None else None,
+        "output_payload_bytes": crop_bytes,
+        "crop_count": len(crops),
+        "latency_ms": round(latency_ms, 3)
+    })
     return crops, crop_info
