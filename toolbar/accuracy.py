@@ -3,6 +3,7 @@
 
 import json
 import re
+import unicodedata
 from collections import Counter
 from pathlib import Path
 
@@ -25,6 +26,9 @@ COLORS = {
     "gold", "beige", "tan", "maroon", "navy", "cyan", "teal",
 }
 
+NO_TARGET = "__no_target__"
+NO_READABLE_TEXT = "__no_readable_text__"
+
 
 def normalize_existence(answer):
     text = str(answer).strip().lower()
@@ -37,7 +41,7 @@ def normalize_existence(answer):
     if re.match(r"^(no|nope)(\b|$)", text):
         return False
 
-    if re.match(r"^(there (is|are)|i (can )?see)\b", text):
+    if re.search(r"\b(there (is|are)|i (can )?see)\b", text):
         if re.search(r"\b(no|not|none|zero)\b", text):
             return False
         return True
@@ -66,6 +70,16 @@ def normalize_counting(answer):
 def normalize_color(answer):
     text = str(answer).strip().lower()
 
+    no_target_patterns = (
+        r"\bthere\s+(?:is|are)\s+no\b",
+        r"\bno\s+(?:\w+\s+){0,3}(?:detected|found|visible|present)\b",
+        r"\b(?:did not|didn't|could not|couldn't|cannot|can't)\s+"
+        r"(?:detect|find|see|identify)\s+(?:any\s+)?"
+        r"(?:\w+\s+){0,3}\w+\b",
+    )
+    if any(re.search(pattern, text) for pattern in no_target_patterns):
+        return NO_TARGET
+
     if re.search(r"\b(unclear|unknown|unsure|cannot determine|can't tell)\b", text):
         return None
 
@@ -78,7 +92,10 @@ def normalize_color(answer):
         if color in COLORS
     }
 
-    return next(iter(found)) if len(found) == 1 else None
+    if not found:
+        return None
+
+    return "|".join(sorted(found))
 
 
 # NEW: Normalize LIST answers to COCO object class sets.
@@ -122,6 +139,83 @@ def list_similarity(pipeline_value, baseline_value):
     return len(pipeline_value & baseline_value) / len(union)
 
 
+def normalize_ocr(answer):
+    if answer is None:
+        return None
+
+    text = unicodedata.normalize("NFKC", str(answer)).casefold().strip()
+    if not text:
+        return None
+
+    no_text_patterns = (
+        r"\bno\s+(?:clearly\s+)?(?:readable|visible)?\s*text\b",
+        r"\bthere\s+is\s+no\s+(?:clearly\s+)?(?:readable|visible)?\s*text\b",
+        r"\bno\s+(?:readable\s+)?(?:text|words?)\s+can\s+be\s+read\b",
+        r"\bno\s+(?:\w+\s+){0,3}(?:text|writing|words?)\s+"
+        r"(?:was|were|is|are)?\s*(?:detected|found|visible|readable)\b",
+        r"\b(?:did not|didn't|could not|couldn't|cannot|can't)\s+"
+        r"(?:detect|find|read)\s+(?:any\s+)?"
+        r"(?:visible\s+)?(?:text|writing|words?)\b",
+        r"\bnothing\s+(?:is\s+)?readable\b",
+        r"\b(?:cannot|can't|unable\s+to)\s+read\s+(?:any\s+)?(?:visible\s+)?text\b",
+        r"\b(?:its|the)\s+(?:text|word|writing)\s+"
+        r"(?:cannot|can't)\s+be\s+read\b",
+    )
+    if any(re.search(pattern, text) for pattern in no_text_patterns):
+        return NO_READABLE_TEXT
+
+    quoted_text = re.search(
+        r"\*\*(.+?)\*\*|[\"“]([^\"”]+)[\"”]",
+        text
+    )
+    if quoted_text:
+        text = quoted_text.group(1) or quoted_text.group(2)
+    else:
+        described_text = re.search(
+            r"\b(?:word|text|label|sign|writing)\b.*?"
+            r"\b(?:reads?|says?|is)\s*[:=]?\s*"
+            r"(.+?)(?:[,.;!?]|$)",
+            text
+        )
+        if described_text:
+            text = described_text.group(1)
+
+    normalized = " ".join(
+        re.findall(r"[^\W_]+", text, flags=re.UNICODE)
+    )
+    return normalized or None
+
+
+def normalized_edit_similarity(pipeline_text, baseline_text):
+    if (pipeline_text == NO_READABLE_TEXT
+            or baseline_text == NO_READABLE_TEXT):
+        return float(pipeline_text == baseline_text)
+
+    if not pipeline_text or not baseline_text:
+        return 0.0
+
+    if len(pipeline_text) > len(baseline_text):
+        pipeline_text, baseline_text = baseline_text, pipeline_text
+
+    previous_row = list(range(len(pipeline_text) + 1))
+    for baseline_index, baseline_character in enumerate(baseline_text, start=1):
+        current_row = [baseline_index]
+        for pipeline_index, pipeline_character in enumerate(
+            pipeline_text,
+            start=1
+        ):
+            current_row.append(min(
+                current_row[-1] + 1,
+                previous_row[pipeline_index] + 1,
+                previous_row[pipeline_index - 1]
+                + (pipeline_character != baseline_character)
+            ))
+        previous_row = current_row
+
+    edit_distance = previous_row[-1]
+    return 1 - edit_distance / max(len(pipeline_text), len(baseline_text))
+
+
 def evaluate_answer(pipeline_result, baseline_result):
     if (pipeline_result.get("status") != "SUCCESS"
             or not baseline_result
@@ -159,6 +253,22 @@ def evaluate_answer(pipeline_result, baseline_result):
             return None, None, None
 
         normalizer = normalize_color
+
+    elif task_type == "ocr":
+        pipeline_value = normalize_ocr(task.get("answer", ""))
+        baseline_value = normalize_ocr(baseline_result.get("answer", ""))
+
+        if pipeline_value is None or baseline_value is None:
+            return None, pipeline_value, baseline_value
+
+        return (
+            normalized_edit_similarity(
+                pipeline_value,
+                baseline_value
+            ),
+            pipeline_value,
+            baseline_value
+        )
 
     # NEW: LIST is evaluated separately using Jaccard similarity.
     elif task_type in {"listing", "list"}:
@@ -216,11 +326,22 @@ def run_accuracy(output_dir):
 
         # NEW: Distinguish LIST similarity from exact-match accuracy.
         task_type = str(pipeline_result.get("task_type") or "").upper()
-        is_list = task_type in {"LIST", "LISTING"}
+        task_results = pipeline_result.get("task_results", [])
+        semantic_type = (
+            str(task_results[0].get("semantic_type") or "").lower()
+            if len(task_results) == 1 else ""
+        )
+        is_list = (
+            task_type in {"LIST", "LISTING"}
+            or semantic_type in {"list", "listing"}
+        )
+        is_ocr = semantic_type == "ocr" or task_type == "TEXT"
+        uses_similarity = is_list or is_ocr
 
         results.append({
             "image": image,
             "task_type": pipeline_result.get("task_type"),
+            "semantic_type": semantic_type,
             "pipeline_answer": pipeline_result.get("answer"),
             "baseline_answer": (
                 baseline_result.get("answer")
@@ -236,8 +357,13 @@ def run_accuracy(output_dir):
                 if is_list and isinstance(baseline_value, set)
                 else baseline_value
             ),
-            "accuracy": None if is_list else accuracy,
-            "similarity": accuracy if is_list else None,
+            "accuracy": None if uses_similarity else accuracy,
+            "similarity": accuracy if uses_similarity else None,
+            "similarity_metric": (
+                "jaccard" if is_list
+                else "normalized_edit" if is_ocr
+                else None
+            ),
         })
 
     evaluated = [
@@ -250,7 +376,12 @@ def run_accuracy(output_dir):
     # NEW: Calculate batch average similarity for LIST tasks.
     list_results = [
         result for result in results
-        if result["task_type"] in {"LIST", "LISTING"}
+        if result["similarity_metric"] == "jaccard"
+        and result["similarity"] is not None
+    ]
+    ocr_results = [
+        result for result in results
+        if result["similarity_metric"] == "normalized_edit"
         and result["similarity"] is not None
     ]
 
@@ -277,19 +408,18 @@ def run_accuracy(output_dir):
             )
             if list_results else None
         ),
+        "ocr_evaluated_images": len(ocr_results),
+        "average_ocr_similarity_percent": (
+            round(
+                sum(result["similarity"] for result in ocr_results)
+                / len(ocr_results) * 100,
+                2
+            )
+            if ocr_results else None
+        ),
     }
-
-    (output_dir / "accuracy_results.json").write_text(
-        json.dumps(results, indent=4, ensure_ascii=False),
-        encoding="utf-8"
-    )
-
-    (output_dir / "accuracy_summary.json").write_text(
-        json.dumps(summary, indent=4, ensure_ascii=False),
-        encoding="utf-8"
-    )
 
     print("\n========== Cloud Agreement Accuracy ==========")
     print(json.dumps(summary, indent=4, ensure_ascii=False))
 
-    return summary
+    return summary, results

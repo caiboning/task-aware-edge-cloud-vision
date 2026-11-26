@@ -15,6 +15,7 @@ not physical network traffic or peak memory usage.
 """
 
 import json
+from datetime import datetime
 from pathlib import Path
 from toolbar import config
 
@@ -620,11 +621,9 @@ def update_results(
     profiles,
     label,
     results_name,
-    summary_name,
 ):
 
     results_path = output_dir / results_name
-    summary_path = output_dir / summary_name
 
     results = read_json(results_path)
 
@@ -643,25 +642,7 @@ def update_results(
             payload["total_payload_bytes"]
         )
 
-    payload_summary = summarize([
-        result["payload_metrics"]
-        for result in results
-    ])
-
-    summary = read_json(summary_path)
-
-    summary["payload_metrics"] = (
-        payload_summary
-    )
-
-    summary["average_total_payload_bytes"] = (
-        payload_summary[
-            "average_total_payload_bytes"
-        ]
-    )
-
     write_json(results_path, results)
-    write_json(summary_path, summary)
 
     return results
 
@@ -829,6 +810,10 @@ def compare_images(
                 "similarity"
             ),
 
+            "similarity_metric": accuracy_result.get(
+                "similarity_metric"
+            ),
+
             "payload_difference_bytes": (
                 payload_difference
             ),
@@ -849,10 +834,133 @@ def compare_images(
 # Final Evaluation
 # ==============================
 
+def write_evaluation_report(
+    report_path,
+    pipeline_results,
+    baseline_results,
+    comparisons,
+    summary,
+):
+    baseline_index = {
+        (result["image"], result["question"]): result
+        for result in baseline_results
+    }
+    comparison_index = {
+        (result["image"], result["question"]): result
+        for result in comparisons
+    }
+
+    paired_accuracy = summary["paired_accuracy"]
+    pipeline_summary = summary["pipeline"]
+    baseline_summary = summary["baseline"]
+    exact_agreement = paired_accuracy["agreement_accuracy_percent"]
+    list_similarity = paired_accuracy["average_similarity_percent"]
+    ocr_similarity = paired_accuracy["average_ocr_similarity_percent"]
+    payload_reduction = summary["average_payload_reduction_percent"]
+
+    def format_percent(value):
+        return f"{value}%" if value is not None else "N/A"
+
+    def format_bytes(value):
+        return f"{value} bytes" if value is not None else "N/A"
+
+    lines = [
+        "Task-Aware vs DeepSeek Baseline",
+        "=" * 34,
+        f"Generated: {datetime.now().astimezone().isoformat(timespec='seconds')}",
+        "",
+        "Batch Summary",
+        "-" * 13,
+        f"Images: {summary['total_paired_images']}",
+        f"Payload-evaluated image pairs: {summary['evaluated_paired_images']}",
+        f"Pipeline successful images: {sum(result.get('status') == 'SUCCESS' for result in pipeline_results)}",
+        f"Baseline successful images: {sum(result.get('status') == 'SUCCESS' for result in baseline_results)}",
+        f"Pipeline average end-to-end latency: {pipeline_summary['average_latency_ms']} ms",
+        f"Baseline average end-to-end latency: {baseline_summary['average_latency_ms']} ms",
+        f"Pipeline average total payload: {format_bytes(pipeline_summary['average_total_payload_bytes'])}",
+        f"Baseline average total payload: {format_bytes(baseline_summary['average_total_payload_bytes'])}",
+        f"Average payload reduction: {format_percent(payload_reduction)}",
+        f"Exact agreement: {format_percent(exact_agreement)} "
+        f"({paired_accuracy['evaluated_images']} evaluated)",
+        f"Average object-list similarity: {format_percent(list_similarity)} "
+        f"({paired_accuracy['list_similarity_evaluated_images']} evaluated)",
+        f"Average OCR normalized edit similarity: {format_percent(ocr_similarity)} "
+        f"({paired_accuracy['ocr_similarity_evaluated_images']} evaluated)",
+        "Agreement/similarity compares task-aware answers with DeepSeek, "
+        "not with human ground truth.",
+        "",
+        "Per-Image Comparison",
+        "-" * 20,
+    ]
+
+    for index, pipeline_result in enumerate(pipeline_results, start=1):
+        key = (pipeline_result["image"], pipeline_result["question"])
+        baseline_result = baseline_index.get(key)
+        comparison = comparison_index.get(key, {})
+        pipeline_payload = pipeline_result.get(
+            "payload_metrics", {}
+        ).get("total_payload_bytes")
+        baseline_payload = (
+            baseline_result.get("payload_metrics", {}).get(
+                "total_payload_bytes"
+            )
+            if baseline_result else None
+        )
+
+        if comparison.get("similarity") is not None:
+            if comparison.get("similarity_metric") == "normalized_edit":
+                label = "OCR normalized edit similarity"
+            else:
+                label = "Object-list Jaccard similarity"
+            comparison_text = f"{label}: {comparison['similarity'] * 100:.2f}%"
+        elif comparison.get("accuracy") is not None:
+            label = "MATCH" if comparison["accuracy"] else "MISMATCH"
+            comparison_text = f"Exact agreement: {label}"
+        else:
+            comparison_text = "Agreement/similarity: N/A (unsupported or unparseable)"
+
+        lines.extend([
+            "",
+            f"[{index}/{len(pipeline_results)}] {pipeline_result['image']}",
+            f"Task: {pipeline_result.get('task_type', 'N/A')}",
+            f"Route: {pipeline_result.get('route', 'N/A')}",
+            f"Pipeline status: {pipeline_result.get('status', 'N/A')}",
+            f"Baseline status: {(baseline_result or {}).get('status', 'N/A')}",
+            f"Task-aware answer: {pipeline_result.get('answer', 'N/A')}",
+            f"DeepSeek baseline answer: {(baseline_result or {}).get('answer', 'N/A')}",
+            comparison_text,
+            f"Pipeline total payload: {pipeline_payload if pipeline_payload is not None else 'N/A'} bytes",
+            f"Baseline total payload: {baseline_payload if baseline_payload is not None else 'N/A'} bytes",
+        ])
+
+    report_path = Path(report_path)
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(
+        "\n".join(lines) + "\n",
+        encoding="utf-8",
+    )
+
+
+def get_evaluation_report_path(output_dir):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    report_path = Path(output_dir) / f"evaluation_report_{timestamp}.txt"
+
+    suffix = 1
+    while report_path.exists():
+        report_path = (
+            Path(output_dir)
+            / f"evaluation_report_{timestamp}_{suffix}.txt"
+        )
+        suffix += 1
+
+    return report_path
+
+
 def finalize_payload(
     output_dir,
     profiles,
     accuracy,
+    accuracy_results,
 ):
 
     output_dir = Path(output_dir)
@@ -867,7 +975,6 @@ def finalize_payload(
         profiles=profiles,
         label="pipeline",
         results_name="results.json",
-        summary_name="summary.json",
     )
 
     baseline_results = update_results(
@@ -875,11 +982,6 @@ def finalize_payload(
         profiles=profiles,
         label="baseline",
         results_name="baseline_results.json",
-        summary_name="baseline_summary.json",
-    )
-
-    accuracy_results = read_json(
-        output_dir / "accuracy_results.json"
     )
 
     comparisons = compare_images(
@@ -991,6 +1093,22 @@ def finalize_payload(
         for result in successful_pairs
         if result["similarity"] is not None
     ]
+    paired_list_similarity = [
+        result["similarity"]
+        for result in successful_pairs
+        if (
+            result.get("similarity_metric") == "jaccard"
+            and result["similarity"] is not None
+        )
+    ]
+    paired_ocr_similarity = [
+        result["similarity"]
+        for result in successful_pairs
+        if (
+            result.get("similarity_metric") == "normalized_edit"
+            and result["similarity"] is not None
+        )
+    ]
 
     summary = {
         "measurement_unit": (
@@ -1045,6 +1163,18 @@ def finalize_payload(
                 paired_accuracy
             ),
 
+            "similarity_evaluated_images": len(
+                paired_similarity
+            ),
+
+            "list_similarity_evaluated_images": len(
+                paired_list_similarity
+            ),
+
+            "ocr_similarity_evaluated_images": len(
+                paired_ocr_similarity
+            ),
+
             "agreement_accuracy_percent": (
                 round(
                     sum(paired_accuracy)
@@ -1057,12 +1187,22 @@ def finalize_payload(
 
             "average_similarity_percent": (
                 round(
-                    sum(paired_similarity)
-                    / len(paired_similarity)
+                    sum(paired_list_similarity)
+                    / len(paired_list_similarity)
                     * 100,
                     2,
                 )
-                if paired_similarity else None
+                if paired_list_similarity else None
+            ),
+
+            "average_ocr_similarity_percent": (
+                round(
+                    sum(paired_ocr_similarity)
+                    / len(paired_ocr_similarity)
+                    * 100,
+                    2,
+                )
+                if paired_ocr_similarity else None
             ),
         },
 
@@ -1079,13 +1219,12 @@ def finalize_payload(
         ],
     }
 
-    write_json(
-        output_dir / "evaluation_results.json",
+    report_path = get_evaluation_report_path(output_dir)
+    write_evaluation_report(
+        report_path,
+        pipeline_results,
+        baseline_results,
         comparisons,
-    )
-
-    write_json(
-        output_dir / "evaluation_summary.json",
         summary,
     )
 
@@ -1101,4 +1240,5 @@ def finalize_payload(
         )
     )
 
+    print("Evaluation report:", report_path)
     return summary

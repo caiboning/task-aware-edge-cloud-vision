@@ -127,7 +127,7 @@ def run_baseline(question, image_paths=None, report_name="baseline"):
     config.PIPELINE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     results = []
-    errors = []
+    failed_count = 0
     batch_start = time.perf_counter()
 
     for index, image_path in enumerate(image_paths, start=1):
@@ -191,7 +191,7 @@ def run_baseline(question, image_paths=None, report_name="baseline"):
                 "error_message": str(error)
             }
             results.append(error_result)
-            errors.append(error_result)
+            failed_count += 1
             logger.exception(
                 "DeepSeek baseline failed | Image: %s",
                 image_name
@@ -211,7 +211,7 @@ def run_baseline(question, image_paths=None, report_name="baseline"):
         "model": DEEPSEEK_MODEL,
         "total_images": len(image_paths),
         "successful_images": successful_count,
-        "failed_images": len(errors),
+        "failed_images": failed_count,
         "average_api_latency_ms": round(
             sum(result["api_latency_ms"] for result in successful_results)
             / successful_count,
@@ -239,14 +239,6 @@ def run_baseline(question, image_paths=None, report_name="baseline"):
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "baseline_results.json").write_text(
         json.dumps(results, indent=4, ensure_ascii=False),
-        encoding="utf-8"
-    )
-    (output_dir / "baseline_errors.json").write_text(
-        json.dumps(errors, indent=4, ensure_ascii=False),
-        encoding="utf-8"
-    )
-    (output_dir / "baseline_summary.json").write_text(
-        json.dumps(summary, indent=4, ensure_ascii=False),
         encoding="utf-8"
     )
     write_report(results, summary, report_path)

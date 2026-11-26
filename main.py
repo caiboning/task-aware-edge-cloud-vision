@@ -24,8 +24,6 @@ def configure_paths():
     config.PIPELINE_CROP_DIR = output_dir / "crops"
     config.PIPELINE_YOLO_DIR = output_dir / "yolo_detections"
     config.PIPELINE_RESULTS = output_dir / "results.json"
-    config.PIPELINE_SUMMARY = output_dir / "summary.json"
-    config.PIPELINE_ERRORS = output_dir / "errors.json"
     config.PIPELINE_TEXT = output_dir / "results.txt"
     config.PIPELINE_LOG = output_dir / "pipeline.log"
 
@@ -74,9 +72,16 @@ def main():
         report_name=BASELINE_REPORT_NAME
     )
 
-    accuracy = run_accuracy(config.PIPELINE_OUTPUT_DIR)
+    accuracy, accuracy_results = run_accuracy(
+        config.PIPELINE_OUTPUT_DIR
+    )
 
-    finalize_payload(config.PIPELINE_OUTPUT_DIR, profiles, accuracy)
+    finalize_payload(
+        config.PIPELINE_OUTPUT_DIR,
+        profiles,
+        accuracy,
+        accuracy_results,
+    )
 
 if __name__ == "__main__":
     main()

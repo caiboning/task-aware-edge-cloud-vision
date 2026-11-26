@@ -1,0 +1,213 @@
+import unittest
+
+from toolbar.accuracy import (
+    NO_READABLE_TEXT,
+    evaluate_answer,
+    normalize_existence,
+    normalize_color,
+    normalize_ocr,
+)
+
+
+class ExistenceNormalizationTests(unittest.TestCase):
+    def test_detects_absence_after_introductory_text(self):
+        answer = (
+            "Based on the image provided, there is no zebra. "
+            "The image shows a baseball game."
+        )
+
+        self.assertIs(normalize_existence(answer), False)
+
+    def test_detects_absence_in_detection_response(self):
+        self.assertIs(
+            normalize_existence("No zebra was detected by YOLO."),
+            False
+        )
+
+    def test_detects_presence_after_introductory_text(self):
+        self.assertIs(
+            normalize_existence(
+                "Based on the image, there is a zebra."
+            ),
+            True
+        )
+
+    def test_pipeline_and_baseline_absence_answers_agree(self):
+        pipeline_result = {
+            "status": "SUCCESS",
+            "question": "Is there a zebra?",
+            "task_results": [{
+                "semantic_type": "existence",
+                "answer": "No zebra was detected by YOLO."
+            }]
+        }
+        baseline_result = {
+            "status": "SUCCESS",
+            "answer": (
+                "Based on the image provided, there is no zebra."
+            )
+        }
+
+        accuracy, pipeline_value, baseline_value = evaluate_answer(
+            pipeline_result,
+            baseline_result
+        )
+
+        self.assertEqual(accuracy, 1)
+        self.assertIs(pipeline_value, False)
+        self.assertIs(baseline_value, False)
+
+
+class UnavailableAnswerAgreementTests(unittest.TestCase):
+    def test_attribute_no_target_answers_agree(self):
+        pipeline_result = {
+            "status": "SUCCESS",
+            "question": "What color is the bus?",
+            "task_plan": {"tasks": [{"attribute": "color"}]},
+            "task_results": [{
+                "semantic_type": "attribute",
+                "answer": (
+                    "YOLO did not detect any bus, so its color "
+                    "cannot be determined."
+                )
+            }]
+        }
+        baseline_result = {
+            "status": "SUCCESS",
+            "answer": "There is no bus in the image."
+        }
+
+        accuracy, pipeline_value, baseline_value = evaluate_answer(
+            pipeline_result,
+            baseline_result
+        )
+
+        self.assertEqual(accuracy, 1)
+        self.assertEqual(pipeline_value, "__no_target__")
+        self.assertEqual(baseline_value, "__no_target__")
+
+    def test_attribute_no_target_does_not_match_a_color(self):
+        pipeline_result = {
+            "status": "SUCCESS",
+            "question": "What color is the bus?",
+            "task_plan": {"tasks": [{"attribute": "color"}]},
+            "task_results": [{
+                "semantic_type": "attribute",
+                "answer": "YOLO did not detect any bus."
+            }]
+        }
+        baseline_result = {
+            "status": "SUCCESS",
+            "answer": "The bus is blue."
+        }
+
+        accuracy, _, _ = evaluate_answer(
+            pipeline_result,
+            baseline_result
+        )
+
+        self.assertEqual(accuracy, 0)
+
+    def test_multiple_colors_are_normalized_as_an_order_independent_set(self):
+        self.assertEqual(
+            normalize_color("The bus is black and white."),
+            "black|white"
+        )
+        self.assertEqual(
+            normalize_color("The bus is white and black."),
+            "black|white"
+        )
+
+    def test_missing_target_and_multiple_colors_are_counted_as_disagreement(self):
+        pipeline_result = {
+            "status": "SUCCESS",
+            "question": "What color is the bus?",
+            "task_plan": {"tasks": [{"attribute": "color"}]},
+            "task_results": [{
+                "semantic_type": "attribute",
+                "answer": (
+                    "YOLO did not detect any bus, so its color "
+                    "cannot be determined."
+                )
+            }]
+        }
+        baseline_result = {
+            "status": "SUCCESS",
+            "answer": (
+                "Based on the image, the bus is black and white."
+            )
+        }
+
+        accuracy, pipeline_value, baseline_value = evaluate_answer(
+            pipeline_result,
+            baseline_result
+        )
+
+        self.assertEqual(accuracy, 0)
+        self.assertEqual(pipeline_value, "__no_target__")
+        self.assertEqual(baseline_value, "black|white")
+
+    def test_ocr_no_text_answers_normalize_to_same_value(self):
+        self.assertEqual(
+            normalize_ocr("YOLO did not detect any text."),
+            NO_READABLE_TEXT
+        )
+        self.assertEqual(
+            normalize_ocr(
+                "YOLO did not detect any refrigerator, "
+                "so its text cannot be read."
+            ),
+            NO_READABLE_TEXT
+        )
+        self.assertEqual(
+            normalize_ocr("There is no readable text in the image."),
+            NO_READABLE_TEXT
+        )
+
+        pipeline_result = {
+            "status": "SUCCESS",
+            "task_results": [{
+                "semantic_type": "ocr",
+                "answer": "YOLO did not detect any text."
+            }]
+        }
+        baseline_result = {
+            "status": "SUCCESS",
+            "answer": "There is no readable text in the image."
+        }
+
+        similarity, _, _ = evaluate_answer(
+            pipeline_result,
+            baseline_result
+        )
+
+        self.assertEqual(similarity, 1.0)
+
+    def test_ocr_answer_matches_text_embedded_in_explanation(self):
+        pipeline_result = {
+            "status": "SUCCESS",
+            "task_results": [{
+                "semantic_type": "ocr",
+                "answer": "KUHL"
+            }]
+        }
+        baseline_result = {
+            "status": "SUCCESS",
+            "answer": (
+                "Based on the image, the word written on the fridge "
+                "is **KUHL**."
+            )
+        }
+
+        similarity, pipeline_value, baseline_value = evaluate_answer(
+            pipeline_result,
+            baseline_result
+        )
+
+        self.assertEqual(similarity, 1.0)
+        self.assertEqual(pipeline_value, "kuhl")
+        self.assertEqual(baseline_value, "kuhl")
+
+
+if __name__ == "__main__":
+    unittest.main()

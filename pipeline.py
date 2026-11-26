@@ -916,7 +916,6 @@ def run_batch(question, image_paths, report_name="results"):
         )
 
     all_results = []
-    error_results = []
 
     batch_start = time.perf_counter()
 
@@ -1006,8 +1005,6 @@ def run_batch(question, image_paths, report_name="results"):
                 "error_message": str(e)
             }
 
-            error_results.append(error_record)
-
             all_results.append({
                 **error_record,
                 "status": "FAILED"
@@ -1035,18 +1032,6 @@ def run_batch(question, image_paths, report_name="results"):
     ) as f:
         json.dump(
             all_results,
-            f,
-            indent=4,
-            ensure_ascii=False
-        )
-
-    with open(
-        config.PIPELINE_ERRORS,
-        "w",
-        encoding="utf-8"
-    ) as f:
-        json.dump(
-            error_results,
             f,
             indent=4,
             ensure_ascii=False
@@ -1180,22 +1165,6 @@ def run_batch(question, image_paths, report_name="results"):
         summary,
         report_path
     )
-
-    # --------------------------
-    # Step 6: Save Summary
-    # --------------------------
-
-    with open(
-        config.PIPELINE_SUMMARY,
-        "w",
-        encoding="utf-8"
-    ) as f:
-        json.dump(
-            summary,
-            f,
-            indent=4,
-            ensure_ascii=False
-        )
 
     logger.info(
         "Batch completed | Success: %d | "
