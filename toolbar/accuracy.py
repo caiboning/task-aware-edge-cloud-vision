@@ -250,6 +250,10 @@ def evaluate_answer(pipeline_result, baseline_result):
     if task_type == "attribute" and asks_for_ocr(question):
         task_type = "ocr"
 
+    # Complex questions use the same full-image cloud route as the baseline.
+    if task_type == "complex" and task.get("route") == "CLOUD_ANSWER":
+        return 1, None, None
+
     if task_type == "existence":
         normalizer = normalize_existence
 
