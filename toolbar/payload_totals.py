@@ -763,6 +763,15 @@ def compare_images(
                     3,
                 )
 
+        agreement = accuracy_result.get("agreement")
+        if agreement is None:
+            agreement = accuracy_result.get("accuracy")
+        if (
+            agreement is None
+            and accuracy_result.get("similarity") is not None
+        ):
+            agreement = int(accuracy_result["similarity"] == 1.0)
+
         comparisons.append({
             "image": pipeline_result["image"],
 
@@ -805,6 +814,8 @@ def compare_images(
             "accuracy": accuracy_result.get(
                 "accuracy"
             ),
+
+            "agreement": agreement,
 
             "similarity": accuracy_result.get(
                 "similarity"
@@ -854,8 +865,6 @@ def write_evaluation_report(
     pipeline_summary = summary["pipeline"]
     baseline_summary = summary["baseline"]
     exact_agreement = paired_accuracy["agreement_accuracy_percent"]
-    list_similarity = paired_accuracy["average_similarity_percent"]
-    ocr_similarity = paired_accuracy["average_ocr_similarity_percent"]
     payload_reduction = summary["average_payload_reduction_percent"]
 
     def format_percent(value):
@@ -881,11 +890,9 @@ def write_evaluation_report(
         f"Baseline average total payload: {format_bytes(baseline_summary['average_total_payload_bytes'])}",
         f"Average payload reduction: {format_percent(payload_reduction)}",
         f"Exact agreement: {format_percent(exact_agreement)} "
-        f"({paired_accuracy['evaluated_images']} evaluated)",
-        f"Average object-list similarity: {format_percent(list_similarity)} "
-        f"({paired_accuracy['list_similarity_evaluated_images']} evaluated)",
-        f"Average OCR normalized edit similarity: {format_percent(ocr_similarity)} "
-        f"({paired_accuracy['ocr_similarity_evaluated_images']} evaluated)",
+        f"({paired_accuracy['evaluated_images']} evaluated; "
+        f"{paired_accuracy['matched_images']} MATCH, "
+        f"{paired_accuracy['mismatched_images']} MISMATCH)",
         "Agreement/similarity compares task-aware answers with DeepSeek, "
         "not with human ground truth.",
         "",
@@ -907,7 +914,19 @@ def write_evaluation_report(
             if baseline_result else None
         )
 
-        if comparison.get("similarity") is not None:
+        if comparison.get("agreement") is not None:
+            label = "MATCH" if comparison["agreement"] else "MISMATCH"
+            comparison_text = f"Exact agreement: {label}"
+            if comparison.get("similarity") is not None:
+                if comparison.get("similarity_metric") == "normalized_edit":
+                    similarity_label = "OCR normalized edit similarity"
+                else:
+                    similarity_label = "Object-list Jaccard similarity"
+                comparison_text += (
+                    f" ({similarity_label}: "
+                    f"{comparison['similarity'] * 100:.2f}%)"
+                )
+        elif comparison.get("similarity") is not None:
             if comparison.get("similarity_metric") == "normalized_edit":
                 label = "OCR normalized edit similarity"
             else:
@@ -1083,9 +1102,9 @@ def finalize_payload(
     )
 
     paired_accuracy = [
-        result["accuracy"]
+        result["agreement"]
         for result in successful_pairs
-        if result["accuracy"] is not None
+        if result["agreement"] is not None
     ]
 
     paired_similarity = [
@@ -1161,6 +1180,12 @@ def finalize_payload(
         "paired_accuracy": {
             "evaluated_images": len(
                 paired_accuracy
+            ),
+
+            "matched_images": sum(paired_accuracy),
+
+            "mismatched_images": (
+                len(paired_accuracy) - sum(paired_accuracy)
             ),
 
             "similarity_evaluated_images": len(

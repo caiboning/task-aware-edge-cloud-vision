@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from toolbar import config
@@ -65,11 +66,16 @@ def main():
         report_name=PIPELINE_REPORT_NAME
     )
 
+    pipeline_results = json.loads(
+        config.PIPELINE_RESULTS.read_text(encoding="utf-8")
+    )
+
     print("\n========== Full-image DeepSeek baseline ==========")
     run_baseline(
         question=question,
         image_paths=image_paths,
-        report_name=BASELINE_REPORT_NAME
+        report_name=BASELINE_REPORT_NAME,
+        pipeline_results=pipeline_results
     )
 
     accuracy, accuracy_results = run_accuracy(

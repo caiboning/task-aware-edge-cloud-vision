@@ -1,5 +1,6 @@
 import argparse
 import json
+import re
 import time
 
 from datetime import datetime
@@ -9,6 +10,7 @@ from models.DEEPSEEK.deepseek import DEEPSEEK_MODEL, ask_deepseek
 from toolbar import config
 from toolbar.logger import get_logger
 from toolbar.profiler import collect_stage_profiles, cloud_body_sizes
+from toolbar.router import asks_for_ocr
 
 
 logger = get_logger()
@@ -55,6 +57,79 @@ def find_images():
     )
 
 
+def _targeted_question_target(question, pipeline_result):
+    if not pipeline_result:
+        return None
+
+    task_plan = pipeline_result.get("task_plan") or {}
+    plan_tasks = task_plan.get("tasks") or []
+    task_results = pipeline_result.get("task_results") or []
+
+    if asks_for_ocr(question):
+        task_kind = "ocr"
+        task_index = next(
+            (
+                index for index, task in enumerate(plan_tasks)
+                if str(task.get("task_type") or "").lower() == "ocr"
+            ),
+            None
+        )
+    else:
+        task_kind = "attribute"
+        task_index = next(
+            (
+                index for index, task in enumerate(plan_tasks)
+                if str(task.get("task_type") or "").lower() == "attribute"
+            ),
+            None
+        )
+
+    if (
+        task_index is None
+        and len(plan_tasks) == 1
+        and (
+            task_kind == "ocr"
+            or str(plan_tasks[0].get("task_type") or "").lower()
+            == "attribute"
+        )
+    ):
+        task_index = 0
+    if task_index is None:
+        return None
+
+    planned_task = plan_tasks[task_index]
+    result_task = (
+        task_results[task_index]
+        if task_index < len(task_results) else {}
+    )
+    target = (
+        result_task.get("target_class")
+        or planned_task.get("target")
+    )
+    target = str(target or "").strip()
+    if target.casefold() in {"", "image", "scene", "null", "none"}:
+        return None
+
+    return target, task_kind
+
+
+def _parse_presence_answer(answer):
+    match = re.match(
+        r"^\s*(yes|no|uncertain)\b",
+        str(answer),
+        re.IGNORECASE
+    )
+    if not match:
+        return None
+
+    value = match.group(1).lower()
+    if value == "yes":
+        return True
+    if value == "no":
+        return False
+    return None
+
+
 def write_report(results, summary, report_path):
     lines = [
         "Full-Image DeepSeek Baseline",
@@ -99,6 +174,19 @@ def write_report(results, summary, report_path):
             f"End-to-end latency: {result['end_to_end_latency_ms']} ms",
             f"Estimated Edge-to-Cloud request body: {result['request_bytes']} bytes",
         ])
+        if result.get("existence_check_answer") is not None:
+            followup_label = (
+                "OCR"
+                if result.get("targeted_task_kind") == "ocr"
+                else "Attribute"
+            )
+            lines.extend([
+                f"Targeted task: {followup_label}",
+                f"Existence check question: {result['existence_check_question']}",
+                f"Existence check answer: {result['existence_check_answer']}",
+                f"{followup_label} follow-up question: {result.get('followup_question') or 'Skipped'}",
+                f"{followup_label} follow-up answer: {result.get('followup_answer') or 'Skipped'}",
+            ])
 
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
@@ -107,8 +195,13 @@ def write_report(results, summary, report_path):
     )
 
 
-def run_baseline(question, image_paths=None, report_name="baseline"):
-    """Run full-image DeepSeek on each image using the same question."""
+def run_baseline(
+    question,
+    image_paths=None,
+    report_name="baseline",
+    pipeline_results=None
+):
+    """Run DeepSeek, gating targeted OCR and attributes on object presence."""
 
     if not question or not question.strip():
         raise ValueError("Question cannot be empty.")
@@ -126,6 +219,12 @@ def run_baseline(question, image_paths=None, report_name="baseline"):
     report_path = get_report_path(report_name)
     config.PIPELINE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+    pipeline_by_image = {
+        result["image"]: result
+        for result in (pipeline_results or [])
+        if result.get("image")
+    }
+
     results = []
     failed_count = 0
     batch_start = time.perf_counter()
@@ -142,14 +241,90 @@ def run_baseline(question, image_paths=None, report_name="baseline"):
 
         start = time.perf_counter()
         try:
-            with collect_stage_profiles() as stages:
-                answer, api_latency, request_bytes = ask_deepseek(
-                    image_path,
-                    question,
-                    return_request_bytes=True
-                )
+            pipeline_result = pipeline_by_image.get(image_name)
+            targeted_question = _targeted_question_target(
+                question,
+                pipeline_result
+            )
+            target, targeted_task_kind = (
+                targeted_question if targeted_question else (None, None)
+            )
+            call_latencies = []
+            call_request_bytes = []
+            existence_check_question = None
+            existence_check_answer = None
+            followup_question = None
+            followup_answer = None
+            cloud_calls = 0
 
-            actual_request, actual_response = cloud_body_sizes(stages, 1)
+            with collect_stage_profiles() as stages:
+                if target:
+                    existence_check_question = (
+                        f"Is the target '{target}' visible in the image? "
+                        "Reply with exactly YES, NO, or UNCERTAIN."
+                    )
+                    existence_check_answer, latency, request_size = (
+                        ask_deepseek(
+                            image_path,
+                            existence_check_question,
+                            return_request_bytes=True
+                        )
+                    )
+                    cloud_calls += 1
+                    call_latencies.append(latency)
+                    call_request_bytes.append(request_size)
+
+                    target_is_visible = _parse_presence_answer(
+                        existence_check_answer
+                    )
+                    if target_is_visible is False:
+                        answer = f"No {target} is visible."
+                    elif target_is_visible is True:
+                        if targeted_task_kind == "ocr":
+                            followup_question = (
+                                f"Read only text physically written on the "
+                                f"target '{target}' in the image. Do not read "
+                                "text on other objects or guess. If the target "
+                                "has no readable text, answer exactly "
+                                f"'No readable text on the {target}.' "
+                                "Otherwise, reply with only the transcribed text."
+                            )
+                        else:
+                            followup_question = (
+                                f"Answer this question about the target "
+                                f"'{target}' only: {question} Do not answer "
+                                "about other objects in the image."
+                            )
+                        followup_answer, latency, request_size = (
+                            ask_deepseek(
+                                image_path,
+                                followup_question,
+                                return_request_bytes=True
+                            )
+                        )
+                        cloud_calls += 1
+                        call_latencies.append(latency)
+                        call_request_bytes.append(request_size)
+                        answer = followup_answer
+                    else:
+                        answer = (
+                            f"Unable to determine whether the {target} is "
+                            f"visible; {targeted_task_kind.upper()} was skipped."
+                        )
+                else:
+                    answer, latency, request_size = ask_deepseek(
+                        image_path,
+                        question,
+                        return_request_bytes=True
+                    )
+                    cloud_calls += 1
+                    call_latencies.append(latency)
+                    call_request_bytes.append(request_size)
+
+            actual_request, actual_response = cloud_body_sizes(
+                stages,
+                cloud_calls
+            )
             actual_total = (
                 actual_request + actual_response
                 if actual_request is not None and actual_response is not None
@@ -163,12 +338,15 @@ def run_baseline(question, image_paths=None, report_name="baseline"):
                 "route": "CLOUD_ANSWER",
                 "used_image": "FULL_IMAGE",
                 "answer": answer,
-                "api_latency_ms": round(api_latency * 1000, 2),
+                "api_latency_ms": round(
+                    sum(call_latencies) * 1000,
+                    2
+                ),
                 "end_to_end_latency_ms": round(
                     (time.perf_counter() - start) * 1000,
                     2
                 ),
-                "request_bytes": request_bytes,
+                "request_bytes": sum(call_request_bytes),
                 "runtime_metrics": stages,
                 "communication_metrics": {
                     "request_bytes": actual_request,
@@ -176,12 +354,21 @@ def run_baseline(question, image_paths=None, report_name="baseline"):
                 },
                 "edge_cloud_request_bytes": actual_request,
                 "edge_cloud_response_bytes": actual_response,
-                "edge_cloud_total_bytes": actual_total
+                "edge_cloud_total_bytes": actual_total,
+                "existence_check_question": existence_check_question,
+                "existence_check_answer": existence_check_answer,
+                "targeted_task_kind": targeted_task_kind,
+                "followup_question": followup_question,
+                "followup_answer": followup_answer,
             }
             results.append(result)
             print("Answer:", answer)
             print("API latency:", result["api_latency_ms"], "ms")
-            print("Estimated Edge-to-Cloud payload:", request_bytes, "bytes")
+            print(
+                "Estimated Edge-to-Cloud payload:",
+                result["request_bytes"],
+                "bytes"
+            )
         except Exception as error:
             error_result = {
                 "image": image_name,

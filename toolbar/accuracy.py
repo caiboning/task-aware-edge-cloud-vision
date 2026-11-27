@@ -7,7 +7,7 @@ import unicodedata
 from collections import Counter
 from pathlib import Path
 
-from toolbar.router import COCO_CLASSES, CLASS_ALIASES
+from toolbar.router import COCO_CLASSES, CLASS_ALIASES, asks_for_ocr
 
 
 NUMBER_WORDS = {
@@ -147,9 +147,19 @@ def normalize_ocr(answer):
     if not text:
         return None
 
+    uncertain_target_patterns = (
+        r"\b(?:unable\s+to|cannot|can't|could not|couldn't)\s+"
+        r"determine\s+whether\b.*\b(?:visible|present)\b",
+        r"\buncertain\s+whether\b.*\b(?:visible|present)\b",
+    )
+    if any(re.search(pattern, text) for pattern in uncertain_target_patterns):
+        return None
+
     no_text_patterns = (
-        r"\bno\s+(?:clearly\s+)?(?:readable|visible)?\s*text\b",
-        r"\bthere\s+is\s+no\s+(?:clearly\s+)?(?:readable|visible)?\s*text\b",
+        r"\bno\s+(?:clearly\s+)?(?:readable|visible)?\s*"
+        r"(?:text|words?)\b",
+        r"\bthere\s+is\s+no\s+(?:clearly\s+)?(?:readable|visible)?\s*"
+        r"(?:text|words?)\b",
         r"\bno\s+(?:readable\s+)?(?:text|words?)\s+can\s+be\s+read\b",
         r"\bno\s+(?:\w+\s+){0,3}(?:text|writing|words?)\s+"
         r"(?:was|were|is|are)?\s*(?:detected|found|visible|readable)\b",
@@ -160,10 +170,11 @@ def normalize_ocr(answer):
         r"\b(?:cannot|can't|unable\s+to)\s+read\s+(?:any\s+)?(?:visible\s+)?text\b",
         r"\b(?:its|the)\s+(?:text|word|writing)\s+"
         r"(?:cannot|can't)\s+be\s+read\b",
+        r"\bno\s+(?:\w+\s+){0,3}(?:detected|found|visible|present)\b",
+        r"\b(?:did not|didn't|could not|couldn't|cannot|can't)\s+"
+        r"(?:detect|find|see|identify)\s+(?:any\s+)?"
+        r"(?:\w+\s+){0,3}\w+\b",
     )
-    if any(re.search(pattern, text) for pattern in no_text_patterns):
-        return NO_READABLE_TEXT
-
     quoted_text = re.search(
         r"\*\*(.+?)\*\*|[\"“]([^\"”]+)[\"”]",
         text
@@ -171,6 +182,9 @@ def normalize_ocr(answer):
     if quoted_text:
         text = quoted_text.group(1) or quoted_text.group(2)
     else:
+        if any(re.search(pattern, text) for pattern in no_text_patterns):
+            return NO_READABLE_TEXT
+
         described_text = re.search(
             r"\b(?:word|text|label|sign|writing)\b.*?"
             r"\b(?:reads?|says?|is)\s*[:=]?\s*"
@@ -233,6 +247,9 @@ def evaluate_answer(pipeline_result, baseline_result):
 
     question = str(pipeline_result.get("question") or "")
 
+    if task_type == "attribute" and asks_for_ocr(question):
+        task_type = "ocr"
+
     if task_type == "existence":
         normalizer = normalize_existence
 
@@ -260,6 +277,14 @@ def evaluate_answer(pipeline_result, baseline_result):
 
         if pipeline_value is None or baseline_value is None:
             return None, pipeline_value, baseline_value
+
+        if (pipeline_value == NO_READABLE_TEXT
+                or baseline_value == NO_READABLE_TEXT):
+            return (
+                int(pipeline_value == baseline_value),
+                pipeline_value,
+                baseline_value
+            )
 
         return (
             normalized_edit_similarity(
@@ -335,8 +360,26 @@ def run_accuracy(output_dir):
             task_type in {"LIST", "LISTING"}
             or semantic_type in {"list", "listing"}
         )
-        is_ocr = semantic_type == "ocr" or task_type == "TEXT"
-        uses_similarity = is_list or is_ocr
+        is_ocr = (
+            semantic_type == "ocr"
+            or task_type == "TEXT"
+            or (
+                semantic_type == "attribute"
+                and asks_for_ocr(pipeline_result.get("question"))
+            )
+        )
+        compares_ocr_text = (
+            is_ocr
+            and accuracy is not None
+            and pipeline_value != NO_READABLE_TEXT
+            and baseline_value != NO_READABLE_TEXT
+        )
+        uses_similarity = is_list or compares_ocr_text
+        agreement = (
+            int(accuracy == 1.0)
+            if uses_similarity and accuracy is not None
+            else accuracy
+        )
 
         results.append({
             "image": image,
@@ -358,6 +401,7 @@ def run_accuracy(output_dir):
                 else baseline_value
             ),
             "accuracy": None if uses_similarity else accuracy,
+            "agreement": agreement,
             "similarity": accuracy if uses_similarity else None,
             "similarity_metric": (
                 "jaccard" if is_list
@@ -368,10 +412,10 @@ def run_accuracy(output_dir):
 
     evaluated = [
         result for result in results
-        if result["accuracy"] is not None
+        if result["agreement"] is not None
     ]
 
-    correct = sum(result["accuracy"] for result in evaluated)
+    correct = sum(result["agreement"] for result in evaluated)
 
     # NEW: Calculate batch average similarity for LIST tasks.
     list_results = [

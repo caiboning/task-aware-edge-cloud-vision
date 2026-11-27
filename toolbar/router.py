@@ -54,6 +54,11 @@ CLASS_ALIASES = {
     "refrigerator": ["fridge", "fridges"]
 }
 
+OCR_INTENT_PATTERN = re.compile(
+    r"\b(?:ocr|text|words?|writing|written|transcrib\w*|read|reads|says?)\b",
+    re.IGNORECASE
+)
+
 
 # ==============================
 # Text Utilities
@@ -74,6 +79,10 @@ def contains_phrase(text, phrase):
         + r"(?!\w)"
     )
     return re.search(pattern, text) is not None
+
+
+def asks_for_ocr(question):
+    return bool(OCR_INTENT_PATTERN.search(str(question or "")))
 
 
 # ==============================

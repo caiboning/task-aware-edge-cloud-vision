@@ -81,6 +81,11 @@ books, labels, and notebooks. Classify by intent:
 if the user asks what written words say or asks
 to read/transcribe them, use ocr even if the
 question names a sign or label as its target.
+If checking that a target exists is only a prerequisite
+for reading its text, classify the request as ocr,
+not existence or attribute. For example, "If a fridge
+is visible, read the text on it" is an ocr request;
+the presence check is a prerequisite, not a separate task.
 Examples: "What does the sign say?",
 "What is written on this label?", and
 "Read the words on the screen."
