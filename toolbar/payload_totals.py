@@ -18,6 +18,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from toolbar import config
+from toolbar.accuracy import evaluate_answer
 
 
 # ==============================
@@ -627,24 +628,84 @@ def update_results(
 
     results = read_json(results_path)
 
-    for result in results:
-
-        payload = measure(
-            result,
-            profiles,
-            label,
-        )
-
-        result["payload_metrics"] = payload
-
-        # Expose the primary metric directly.
-        result["total_payload_bytes"] = (
-            payload["total_payload_bytes"]
-        )
+    for image_result in results:
+        runs = [image_result, *image_result.get("yolo_comparisons", [])]
+        for result in runs:
+            payload = measure(result, profiles, label)
+            result["payload_metrics"] = payload
+            result["total_payload_bytes"] = payload["total_payload_bytes"]
 
     write_json(results_path, results)
 
     return results
+
+
+def yolo_run_groups(results):
+    groups = {}
+    for image_result in results:
+        for run in (image_result, *image_result.get("yolo_comparisons", [])):
+            model = run.get("yolo_model")
+            if model:
+                groups.setdefault(model, []).append(run)
+    return groups
+
+
+PAYLOAD_BREAKDOWN = {
+    "static_payload_bytes": "Static model",
+    "runtime_payload_bytes": "Runtime",
+    "network_payload_bytes": "Network",
+    "total_payload_bytes": "Total",
+}
+
+
+def payload_run_totals(runs):
+    payloads = [
+        run["payload_metrics"] for run in runs
+        if run.get("payload_metrics", {}).get("measurement_complete")
+    ]
+    return {
+        "runs": len(runs),
+        "measured_runs": len(payloads),
+        "total_bytes": {
+            key: sum(row[key] for row in payloads) if payloads else None
+            for key in PAYLOAD_BREAKDOWN
+        },
+        "average_bytes": {
+            key: average_known(row[key] for row in payloads)
+            for key in PAYLOAD_BREAKDOWN
+        },
+    }
+
+
+def format_payload_breakdown(payload):
+    return ", ".join(
+        f"{label} {payload[key]} bytes" if payload.get(key) is not None else f"{label} N/A"
+        for key, label in PAYLOAD_BREAKDOWN.items()
+    )
+
+
+def yolo_payload_summary(results, baseline_results):
+    groups = yolo_run_groups(results)
+    if not groups:
+        return {}
+
+    baselines = {(run["image"], run["question"]): run for run in baseline_results}
+    models = {}
+    for model, runs in groups.items():
+        scores = [
+            evaluate_answer(run, baselines.get((run.get("image"), run.get("question"))))[0]
+            for run in runs
+        ]
+        evaluated = [score for score in scores if score is not None]
+        models[model] = {
+            **payload_run_totals(runs),
+            "agreement_evaluated": len(evaluated),
+            "agreement_matches": sum(score == 1 for score in evaluated),
+        }
+
+    return {
+        "models": models,
+    }
 
 
 # ==============================
@@ -895,10 +956,30 @@ def write_evaluation_report(
         f"{paired_accuracy['mismatched_images']} MISMATCH)",
         "Agreement/similarity compares task-aware answers with DeepSeek, "
         "not with human ground truth.",
-        "",
-        "Per-Image Comparison",
-        "-" * 20,
     ]
+    yolo_payloads = summary.get("yolo_payloads", {})
+    if yolo_payloads:
+        lines.extend([
+            "",
+            "YOLO Payload by Model",
+            "Totals use complete measurements for each model.",
+            "Shared Qwen classification and model storage are counted in each logical model run.",
+        ])
+        entries = list(yolo_payloads["models"].items())
+        entries.append(("DeepSeek baseline (full batch)", summary["baseline_payload_totals"]))
+        for name, totals in entries:
+            lines.extend([
+                f"{name} ({totals['measured_runs']}/{totals['runs']} measured)",
+                f"  Batch sum: {format_payload_breakdown(totals['total_bytes'])}",
+                f"  Per-run average: {format_payload_breakdown(totals['average_bytes'])}",
+            ])
+            if "agreement_evaluated" in totals:
+                count = totals["agreement_evaluated"]
+                matches = totals["agreement_matches"]
+                agreement = f"{100 * matches / count:.2f}%" if count else "N/A"
+                lines.append(f"  Exact agreement vs DeepSeek: {agreement} ({matches}/{count})")
+
+    lines.extend(["", "Per-Image Comparison", "-" * 20])
 
     for index, pipeline_result in enumerate(pipeline_results, start=1):
         key = (pipeline_result["image"], pipeline_result["question"])
@@ -951,6 +1032,23 @@ def write_evaluation_report(
             f"Pipeline total payload: {pipeline_payload if pipeline_payload is not None else 'N/A'} bytes",
             f"Baseline total payload: {baseline_payload if baseline_payload is not None else 'N/A'} bytes",
         ])
+
+        groups = yolo_run_groups([pipeline_result])
+        if groups:
+            runs = [run for entries in groups.values() for run in entries]
+            for run in runs:
+                score, _, _ = evaluate_answer(run, baseline_result)
+                agreement = "N/A" if score is None else ("MATCH" if score == 1 else "MISMATCH")
+                lines.extend([
+                    f"  {run['yolo_model']} | {run.get('status', 'N/A')} | {agreement}",
+                    f"    Answer: {run.get('answer', run.get('error_message', 'N/A'))}",
+                    f"    End-to-end latency: {get_latency(run, 'pipeline')} ms",
+                    f"    Payload: {format_payload_breakdown(run.get('payload_metrics', {}))}",
+                ])
+            if baseline_result:
+                lines.append(
+                    f"  Baseline payload: {format_payload_breakdown(baseline_result.get('payload_metrics', {}))}"
+                )
 
     report_path = Path(report_path)
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1243,6 +1341,9 @@ def finalize_payload(
             for diagnostic in result["diagnostics"]
         ],
     }
+
+    summary["yolo_payloads"] = yolo_payload_summary(pipeline_results, baseline_results)
+    summary["baseline_payload_totals"] = payload_run_totals(baseline_results)
 
     report_path = get_evaluation_report_path(output_dir)
     write_evaluation_report(

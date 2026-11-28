@@ -34,6 +34,14 @@ def available_size(path):
 
 def ncnn_profile(name, directory):
     profile = new_profile(name, "NCNN")
+    architecture_parameters = {
+        "YOLO11n": 2_624_080,
+        "YOLO11s": 9_458_752,
+        "YOLOv8n": 3_157_200,
+    }
+    profile["parameter_count"] = architecture_parameters.get(name)
+    if profile["parameter_count"] is not None:
+        profile["parameter_count_basis"] = "Ultralytics COCO architecture before NCNN export"
 
     weight = available_size(directory / "model.ncnn.bin")
     structure = available_size(directory / "model.ncnn.param")

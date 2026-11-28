@@ -37,6 +37,11 @@ YOLO_MODEL = (
     ROOT / "models" / "YOLO" / "yolo11n_ncnn_model"
 )
 
+YOLO_COMPARISON_MODELS = (
+    YOLO_MODEL.parent / "yolo11s_ncnn_model",
+    YOLO_MODEL.parent / "yolov8n_ncnn_model",
+)
+
 YOLO_DEVICE = "cpu"
 YOLO_CONF = 0.25
 

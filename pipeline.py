@@ -12,6 +12,8 @@ from PIL import Image
 from toolbar import config
 from toolbar.logger import get_logger
 from toolbar.profiler import profile_pipeline
+from toolbar.model_profiles import ncnn_profile
+from toolbar.payload_totals import model_key, yolo_run_groups
 from toolbar.router import route_task
 from toolbar.crop import generate_crops
 from toolbar.detection_answer import (
@@ -31,7 +33,7 @@ from models.DEEPSEEK.deepseek import DEEPSEEK_MODEL, ask_deepseek
 
 logger = get_logger()
 
-detector = None
+detectors = {}
 llm = None
 
 
@@ -44,21 +46,15 @@ def get_llm():
     return llm
 
 
-def get_detector():
-    """
-    Load YOLO once and reuse it.
-    """
-
-    global detector
-
-    if detector is None:
-        detector = YOLODetector(
-            model_path=config.YOLO_MODEL,
+def get_detector(model_path):
+    if model_path not in detectors:
+        detectors[model_path] = YOLODetector(
+            model_path=model_path,
             device=config.YOLO_DEVICE,
             confidence=config.YOLO_CONF
         )
 
-    return detector
+    return detectors[model_path]
 
 
 def get_report_path(report_name):
@@ -163,6 +159,28 @@ def write_text_report(results, summary, report_path):
             "average_component_latency_ms"
         ].items()
     )
+    groups = yolo_run_groups(results)
+    if groups:
+        lines.extend(["", "YOLO Model Parameters and Batch Latency"])
+        for model_path in (config.YOLO_MODEL, *config.YOLO_COMPARISON_MODELS):
+            model = model_path.name
+            if model not in groups:
+                continue
+            key = model_key({"stage": "yolo_detection", "model": model})
+            profile = ncnn_profile(key, model_path)
+            runs = groups[model]
+            lines.extend([
+                f"{model}",
+                f"  Parameters: {profile.get('parameter_count') or 'N/A'}",
+                f"  Parameter basis: {profile.get('parameter_count_basis', 'N/A')}",
+                f"  Format: {profile.get('model_format', 'N/A')}",
+                f"  Input resolution: {profile.get('input_resolution') or 'N/A'}",
+                f"  Weights: {profile.get('weight_size_bytes') or 'N/A'} bytes",
+                f"  Deployment size: {profile.get('total_model_size_bytes') or 'N/A'} bytes",
+                f"  Device: {config.YOLO_DEVICE}, confidence threshold: {config.YOLO_CONF}",
+                f"  {yolo_latency_summary(runs)}",
+            ])
+
     lines.extend([
         "",
         "Per-Image Results",
@@ -231,6 +249,9 @@ def write_text_report(results, summary, report_path):
             f"{metrics['edge_to_cloud_bytes']} bytes",
             format_total_payload(metrics),
         ])
+        if result.get("yolo_model"):
+            for model_result in (result, *result.get("yolo_comparisons", [])):
+                lines.extend(yolo_result_lines(model_result))
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
         "\n".join(lines) + "\n",
@@ -324,7 +345,7 @@ def save_crops(crops, relative_path):
 # Main Pipeline
 # ==============================
 @profile_pipeline
-def run_pipeline(image_path, question):
+def run_pipeline(image_path, question, *, yolo_model=None, task_plan=None):
     """
     Pipeline:
 
@@ -357,22 +378,18 @@ def run_pipeline(image_path, question):
     # --------------------------
 
     llm_model_load_latency = 0.0
-    if llm is None:
-        llm_model_load_start = time.perf_counter()
-        llm_model = get_llm()
-        llm_model_load_latency = (
-            time.perf_counter() - llm_model_load_start
-        )
-    else:
-        llm_model = llm
+    llm_latency = 0.0
+    if task_plan is None:
+        if llm is None:
+            llm_model_load_start = time.perf_counter()
+            llm_model = get_llm()
+            llm_model_load_latency = time.perf_counter() - llm_model_load_start
+        else:
+            llm_model = llm
 
-    llm_start = time.perf_counter()
-    task_plan = llm_model.understand_task(
-        question
-    )
-    llm_latency = (
-        time.perf_counter() - llm_start
-    )
+        llm_start = time.perf_counter()
+        task_plan = llm_model.understand_task(question)
+        llm_latency = time.perf_counter() - llm_start
 
     # --------------------------
     # Step 3: Task Router
@@ -404,18 +421,17 @@ def run_pipeline(image_path, question):
     )
 
     if needs_yolo:
-        # --------------------------
-        # Step 4: YOLO Detection
-        # --------------------------
+        yolo_model = yolo_model or config.YOLO_MODEL
+        artifact_path = relative_path
+        if yolo_model != config.YOLO_MODEL:
+            artifact_path = Path(yolo_model.name) / relative_path
 
-        if detector is None:
+        if yolo_model not in detectors:
             yolo_model_load_start = time.perf_counter()
-            yolo_detector = get_detector()
-            yolo_model_load_latency = (
-                time.perf_counter() - yolo_model_load_start
-            )
+            yolo_detector = get_detector(yolo_model)
+            yolo_model_load_latency = time.perf_counter() - yolo_model_load_start
         else:
-            yolo_detector = detector
+            yolo_detector = detectors[yolo_model]
 
         detections, yolo_latency, raw_result = (
             yolo_detector.detect(
@@ -426,7 +442,7 @@ def run_pipeline(image_path, question):
 
         yolo_image_path = save_yolo_visualization(
             raw_result,
-            relative_path
+            artifact_path
         )
 
         logger.info(
@@ -449,7 +465,7 @@ def run_pipeline(image_path, question):
 
             crop_paths = save_crops(
                 crops,
-                relative_path
+                artifact_path
             )
 
             crop_latency = (
@@ -869,6 +885,7 @@ def run_pipeline(image_path, question):
         "used_image": used_image,
         "used_crop_path": used_crop_path,
         "detections": detections,
+        "yolo_model": yolo_model.name if needs_yolo else None,
         "yolo_image_path": yolo_image_path,
         "crop_info": crop_info,
         "crop_paths": crop_paths,
@@ -879,6 +896,65 @@ def run_pipeline(image_path, question):
 # ==============================
 # Batch Pipeline Runner
 # ==============================
+
+def yolo_latency_summary(runs):
+    successful = [run for run in runs if run.get("status") == "SUCCESS"]
+    if not successful:
+        return f"0/{len(runs)} successful; latency N/A"
+    yolo_ms = sum(run["metrics"]["yolo_latency_ms"] for run in successful)
+    end_to_end_ms = sum(run["metrics"]["total_latency_ms"] for run in successful)
+    count = len(successful)
+    return (
+        f"{count}/{len(runs)} successful; YOLO total {yolo_ms:.2f} ms, "
+        f"average {yolo_ms / count:.2f} ms; end-to-end total {end_to_end_ms:.2f} ms, "
+        f"average {end_to_end_ms / count:.2f} ms"
+    )
+
+
+def yolo_result_lines(result):
+    yield f"YOLO model: {result['yolo_model']}"
+    if "error_message" in result:
+        yield f"  Failed: {result['error_message']}"
+        return
+
+    yield f"  Route: {result['route']}"
+    yield f"  Answer: {result['answer']}"
+    yield f"  Detected objects: {len(result['detections'])}"
+    yield f"  YOLO model load: {result['metrics']['yolo_model_load_latency_ms']} ms"
+    yield f"  YOLO inference: {result['metrics']['yolo_latency_ms']} ms"
+    yield f"  End-to-end latency: {result['metrics']['total_latency_ms']} ms"
+    yield f"  Detection image: {result['yolo_image_path']}"
+    if result.get("used_crop_path"):
+        yield f"  Crop output: {result['used_crop_path']}"
+
+
+def compare_yolo_models(image_path, question, result):
+    comparisons = []
+    for model_path in config.YOLO_COMPARISON_MODELS:
+        if model_path == config.YOLO_MODEL:
+            continue
+        try:
+            comparison = run_pipeline(
+                image_path, question, yolo_model=model_path,
+                task_plan=result["task_plan"],
+            )
+        except Exception as error:
+            logger.exception("YOLO comparison failed | Model: %s", model_path.name)
+            comparison = {
+                "yolo_model": model_path.name,
+                "status": "FAILED",
+                "error_message": str(error),
+            }
+        if "runtime_metrics" in comparison:
+            # Attribute the shared classification to each logical model variant.
+            shared = [
+                stage for stage in result["runtime_metrics"]
+                if stage["stage"] == "qwen_classification"
+            ]
+            comparison["runtime_metrics"] = shared + comparison["runtime_metrics"]
+        comparisons.append(comparison)
+    return comparisons
+
 
 def run_batch(question, image_paths, report_name="results"):
     image_paths = list(image_paths)
@@ -893,7 +969,9 @@ def run_batch(question, image_paths, report_name="results"):
         return
 
     print(f"\nFound {len(image_paths)} images.")
-    print("YOLO Model:", config.YOLO_MODEL)
+    print("YOLO models:", ", ".join(
+        path.name for path in (config.YOLO_MODEL, *config.YOLO_COMPARISON_MODELS)
+    ))
     print("VLM Model:", config.VLM_MODEL)
     print("DeepSeek Model:", DEEPSEEK_MODEL)
 
@@ -916,8 +994,6 @@ def run_batch(question, image_paths, report_name="results"):
         )
 
     all_results = []
-
-    batch_start = time.perf_counter()
 
     logger.info("=" * 50)
     logger.info("Pipeline batch started")
@@ -950,6 +1026,11 @@ def run_batch(question, image_paths, report_name="results"):
                 image_path,
                 question
             )
+
+            if result["yolo_model"]:
+                result["yolo_comparisons"] = compare_yolo_models(
+                    image_path, question, result
+                )
 
             all_results.append(result)
 
@@ -994,6 +1075,9 @@ def run_batch(question, image_paths, report_name="results"):
                 "bytes"
             )
             print(format_total_payload(result["metrics"]))
+            if result["yolo_model"]:
+                for model_result in (result, *result["yolo_comparisons"]):
+                    print("\n".join(yolo_result_lines(model_result)))
 
         except Exception as e:
 
@@ -1016,10 +1100,6 @@ def run_batch(question, image_paths, report_name="results"):
             )
 
             continue
-
-    batch_latency = (
-        time.perf_counter() - batch_start
-    )
 
     # --------------------------
     # Step 3: Save Results
@@ -1146,9 +1226,6 @@ def run_batch(question, image_paths, report_name="results"):
             average_latency, 2
         ),
         "average_component_latency_ms": average_component_latency,
-        "batch_latency_s": round(
-            batch_latency, 3
-        ),
         "total_edge_to_cloud_bytes": total_edge_to_cloud_bytes,
         "average_edge_to_cloud_bytes": round(
             average_edge_to_cloud_bytes, 2

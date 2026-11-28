@@ -133,9 +133,9 @@ def cloud_body_sizes(stages, expected_calls):
 
 def profile_pipeline(function):
     @wraps(function)
-    def wrapped(image_path, question):
+    def wrapped(image_path, question, **options):
         with collect_stage_profiles() as stages:
-            result = function(image_path, question)
+            result = function(image_path, question, **options)
 
         result["runtime_metrics"] = stages
 
